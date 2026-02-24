@@ -1,5 +1,5 @@
 # Cyber Security RPG
-# v5: level 3 — breach investigation scenario
+# v6: inventory system for tools and exploits
 
 import os
 import time
@@ -15,12 +15,18 @@ class Player:
         self.score = 0
         self.health = 100
         self.max_levels = 3
+        # tools unlocked as you progress
+        self.inventory = []
 
     def status(self):
         print(f"\n  Player:  {self.name}")
         print(f"  Level:   {self.level} / {self.max_levels}")
         print(f"  Score:   {self.score}")
         print(f"  Health:  {self.health}")
+        if self.inventory:
+            print(f"  Tools:   {', '.join(self.inventory)}")
+        else:
+            print(f"  Tools:   None yet")
 
     def add_score(self, points):
         self.score += points
@@ -37,8 +43,14 @@ class Player:
         if self.level < self.max_levels:
             self.level += 1
             print(f"\n  [+] Level up! Now on level {self.level}.")
-        else:
-            print("\n  [+] All levels complete!")
+
+    def unlock_tool(self, tool):
+        if tool not in self.inventory:
+            self.inventory.append(tool)
+            print(f"\n  [+] Tool unlocked: {tool}")
+
+    def has_tool(self, tool):
+        return tool in self.inventory
 
 def intro():
     clear()
@@ -52,6 +64,7 @@ def intro():
 
   Every level is based on a real attack scenario.
   Think carefully. Wrong moves cost you health.
+  Complete levels to unlock tools.
     """)
     print("=" * 50)
 
@@ -107,6 +120,7 @@ def level_one(player):
                 print(f"\n  [+] Correct. '{selected}' is a weak password.")
                 print("  Real attackers use wordlists to crack these in seconds.")
                 player.add_score(100)
+                player.unlock_tool("Wordlist Cracker")
                 time.sleep(2)
                 player.next_level()
                 return True
@@ -139,21 +153,18 @@ def level_two(player):
         {
             'port': 23,
             'service': 'Telnet',
-            'open': True,
             'threat': True,
             'reason': 'Telnet sends data in plain text. Should always be disabled.'
         },
         {
             'port': 443,
             'service': 'HTTPS',
-            'open': True,
             'threat': False,
             'reason': 'HTTPS is expected on a web server. Nothing suspicious here.'
         },
         {
             'port': 3389,
             'service': 'RDP',
-            'open': True,
             'threat': True,
             'reason': 'RDP exposed to the internet is a common attack vector.'
         }
@@ -163,6 +174,11 @@ def level_two(player):
 
     print(f"  Scan results for suspicious device:\n")
     print(f"  Port {scenario['port']} ({scenario['service']}) — OPEN\n")
+
+    # hint available if player has the wordlist tool from level 1
+    if player.has_tool("Wordlist Cracker"):
+        print("  [Tool available: Wordlist Cracker — not useful here but noted in your kit]\n")
+
     print("  Should you block this port?\n")
     print("  1. Yes — block it")
     print("  2. No — leave it open")
@@ -173,12 +189,14 @@ def level_two(player):
         if choice == "1" and scenario['threat']:
             print(f"\n  [+] Correct. {scenario['reason']}")
             player.add_score(150)
+            player.unlock_tool("Port Scanner")
             time.sleep(2)
             player.next_level()
             return True
         elif choice == "2" and not scenario['threat']:
             print(f"\n  [+] Correct. {scenario['reason']}")
             player.add_score(150)
+            player.unlock_tool("Port Scanner")
             time.sleep(2)
             player.next_level()
             return True
@@ -204,7 +222,6 @@ def level_three(player):
   suspicious entry.
     """)
 
-    # randomise log sets so it's different each run
     log_sets = [
         {
             'logs': [
@@ -241,6 +258,10 @@ def level_three(player):
     for i, log in enumerate(log_set['logs']):
         print(f"  {i + 1}. {log}")
 
+    # port scanner tool gives a hint
+    if player.has_tool("Port Scanner"):
+        print("\n  [Port Scanner active — no open ports detected on attacker IP]\n")
+
     print("\n  Which log entry shows the attacker?\n")
 
     attempts = 2
@@ -249,6 +270,7 @@ def level_three(player):
         if choice == log_set['answer']:
             print(f"\n  [+] Correct. {log_set['reason']}")
             player.add_score(200)
+            player.unlock_tool("Log Analyser")
             time.sleep(2)
             player.next_level()
             return True
