@@ -1,5 +1,5 @@
 # Cyber Security RPG
-# v4: level 2 — port scanning scenario
+# v5: level 3 — breach investigation scenario
 
 import os
 import time
@@ -37,6 +37,8 @@ class Player:
         if self.level < self.max_levels:
             self.level += 1
             print(f"\n  [+] Level up! Now on level {self.level}.")
+        else:
+            print("\n  [+] All levels complete!")
 
 def intro():
     clear()
@@ -133,7 +135,6 @@ def level_two(player):
   of network security.
     """)
 
-    # randomise which port is the threat each run
     scenarios = [
         {
             'port': 23,
@@ -189,6 +190,76 @@ def level_two(player):
     print(f"\n  [-] Out of attempts. {scenario['reason']}\n")
     return False
 
+def level_three(player):
+    clear()
+    print("=" * 50)
+    print("  LEVEL 3: BREACH INVESTIGATION")
+    print("=" * 50)
+    print("""
+  Alerts are firing. A system has been compromised.
+  You have three log entries from around the time
+  of the breach. One of them shows the attacker.
+
+  Read the logs carefully and identify the
+  suspicious entry.
+    """)
+
+    # randomise log sets so it's different each run
+    log_sets = [
+        {
+            'logs': [
+                "09:14:22  user.login  alice@corp.com  IP: 192.168.1.5  SUCCESS",
+                "09:15:01  user.login  bob@corp.com  IP: 185.220.101.45  SUCCESS  (TOR exit node)",
+                "09:16:44  file.access  charlie@corp.com  IP: 192.168.1.8  SUCCESS"
+            ],
+            'answer': '2',
+            'reason': 'Login from a TOR exit node is a major red flag. Likely credential stuffing.'
+        },
+        {
+            'logs': [
+                "14:02:11  admin.login  sysadmin  IP: 10.0.0.1  SUCCESS",
+                "14:03:55  file.download  sysadmin  IP: 10.0.0.1  200 files downloaded",
+                "14:04:01  admin.login  sysadmin  IP: 203.0.113.99  SUCCESS  (outside business hours)"
+            ],
+            'answer': '3',
+            'reason': 'Same account logged in from two different IPs within seconds — impossible without credential theft.'
+        },
+        {
+            'logs': [
+                "11:30:00  user.login  dave@corp.com  IP: 192.168.1.12  FAILED x5 then SUCCESS",
+                "11:31:20  user.login  eve@corp.com  IP: 192.168.1.9  SUCCESS",
+                "11:32:45  user.login  frank@corp.com  IP: 192.168.1.14  SUCCESS"
+            ],
+            'answer': '1',
+            'reason': 'Five failed attempts followed by a success is a classic brute force pattern.'
+        }
+    ]
+
+    log_set = random.choice(log_sets)
+
+    print("  Log entries:\n")
+    for i, log in enumerate(log_set['logs']):
+        print(f"  {i + 1}. {log}")
+
+    print("\n  Which log entry shows the attacker?\n")
+
+    attempts = 2
+    while attempts > 0:
+        choice = input("  Your answer (1-3): ").strip()
+        if choice == log_set['answer']:
+            print(f"\n  [+] Correct. {log_set['reason']}")
+            player.add_score(200)
+            time.sleep(2)
+            player.next_level()
+            return True
+        else:
+            attempts -= 1
+            player.take_damage(30)
+            print(f"\n  [-] Wrong. {attempts} attempt(s) left.")
+
+    print(f"\n  [-] Out of attempts. {log_set['reason']}\n")
+    return False
+
 intro()
 name = input("\n  Enter your name: ").strip()
 player = Player(name)
@@ -214,7 +285,7 @@ while True:
         level_two(player)
         time.sleep(1)
     elif choice == "3" and player.level >= 3:
-        print("\n  Level 3 coming soon.\n")
+        level_three(player)
         time.sleep(1)
     else:
         print("\n  Level locked or invalid option.\n")
