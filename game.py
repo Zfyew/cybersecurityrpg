@@ -1,5 +1,5 @@
 # Cyber Security RPG
-# v3: level 1 — password cracking scenario
+# v4: level 2 — port scanning scenario
 
 import os
 import time
@@ -82,7 +82,6 @@ def level_one(player):
   Strong passwords are long, mixed and random.
     """)
 
-    # mix of weak and strong — player picks the weak one
     passwords = [
         "password123",
         "Tr0ub4dor&3",
@@ -119,6 +118,77 @@ def level_one(player):
     print("\n  Out of attempts. Level failed.\n")
     return False
 
+def level_two(player):
+    clear()
+    print("=" * 50)
+    print("  LEVEL 2: PORT SCANNING")
+    print("=" * 50)
+    print("""
+  An unknown device has appeared on the network.
+  You need to work out what service is running on
+  a suspicious open port and decide whether to
+  block it or leave it.
+
+  Knowing what ports are used for is a core part
+  of network security.
+    """)
+
+    # randomise which port is the threat each run
+    scenarios = [
+        {
+            'port': 23,
+            'service': 'Telnet',
+            'open': True,
+            'threat': True,
+            'reason': 'Telnet sends data in plain text. Should always be disabled.'
+        },
+        {
+            'port': 443,
+            'service': 'HTTPS',
+            'open': True,
+            'threat': False,
+            'reason': 'HTTPS is expected on a web server. Nothing suspicious here.'
+        },
+        {
+            'port': 3389,
+            'service': 'RDP',
+            'open': True,
+            'threat': True,
+            'reason': 'RDP exposed to the internet is a common attack vector.'
+        }
+    ]
+
+    scenario = random.choice(scenarios)
+
+    print(f"  Scan results for suspicious device:\n")
+    print(f"  Port {scenario['port']} ({scenario['service']}) — OPEN\n")
+    print("  Should you block this port?\n")
+    print("  1. Yes — block it")
+    print("  2. No — leave it open")
+
+    attempts = 2
+    while attempts > 0:
+        choice = input("\n  Your answer (1-2): ").strip()
+        if choice == "1" and scenario['threat']:
+            print(f"\n  [+] Correct. {scenario['reason']}")
+            player.add_score(150)
+            time.sleep(2)
+            player.next_level()
+            return True
+        elif choice == "2" and not scenario['threat']:
+            print(f"\n  [+] Correct. {scenario['reason']}")
+            player.add_score(150)
+            time.sleep(2)
+            player.next_level()
+            return True
+        else:
+            attempts -= 1
+            player.take_damage(25)
+            print(f"\n  [-] Wrong call. {attempts} attempt(s) left.")
+
+    print(f"\n  [-] Out of attempts. {scenario['reason']}\n")
+    return False
+
 intro()
 name = input("\n  Enter your name: ").strip()
 player = Player(name)
@@ -141,7 +211,7 @@ while True:
         level_one(player)
         time.sleep(1)
     elif choice == "2" and player.level >= 2:
-        print("\n  Level 2 coming soon.\n")
+        level_two(player)
         time.sleep(1)
     elif choice == "3" and player.level >= 3:
         print("\n  Level 3 coming soon.\n")
