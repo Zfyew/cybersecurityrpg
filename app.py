@@ -197,6 +197,49 @@ def answer():
             'reason': reason,
             'player': player
         })
+    
+@app.route('/api/ai_hint', methods=['POST'])
+def ai_hint():
+    data = request.json
+    context = data.get('context', '')
+    key = data.get('api_key', '')
+
+    if not key:
+        return jsonify({'hint': 'No API key provided.'})
+
+    try:
+        import urllib.request
+        import json as json_lib
+
+        payload = json_lib.dumps({
+            "model": "claude-sonnet-4-20250514",
+            "max_tokens": 150,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": f"You are a cybersecurity mentor in a training game. {context} Keep your hint to 2 sentences maximum. Do not give the answer away directly."
+                }
+            ]
+        }).encode()
+
+        req = urllib.request.Request(
+            'https://api.anthropic.com/v1/messages',
+            data=payload,
+            headers={
+                'Content-Type': 'application/json',
+                'x-api-key': key,
+                'anthropic-version': '2023-06-01'
+            }
+        )
+
+        with urllib.request.urlopen(req) as response:
+            result = json_lib.loads(response.read())
+            hint = result['content'][0]['text']
+            return jsonify({'hint': hint})
+
+    except Exception as e:
+        return jsonify({'hint': f'Could not reach Claude: {str(e)}'})   
+    
 
 if __name__ == '__main__':
     app.run(debug=True)

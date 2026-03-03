@@ -333,3 +333,74 @@ button:hover {
     margin-top: 16px;
     display: inline-block;
 }
+
+.api-row {
+    padding: 12px 24px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-top: 1px solid #1a1a1a;
+}
+
+.prompt-optional {
+    color: #666;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.optional-tag {
+    color: #444;
+    font-size: 11px;
+    letter-spacing: 1px;
+}
+
+.api-row input {
+    flex: 1;
+    color: #666;
+}
+
+.ai-mode-badge {
+    display: inline-block;
+    border: 1px solid #00ff41;
+    color: #00ff41;
+    font-size: 10px;
+    letter-spacing: 2px;
+    padding: 3px 8px;
+    margin-left: 12px;
+    vertical-align: middle;
+}
+
+.hint-btn {
+    border-color: #ffbd2e;
+    color: #ffbd2e;
+    font-size: 11px;
+    padding: 6px 14px;
+    margin-left: 12px;
+}
+
+.hint-btn:hover {
+    background: #ffbd2e;
+    color: #0a0a0a;
+}
+
+.hint-box {
+    margin-top: 16px;
+    padding: 14px 18px;
+    border-left: 3px solid #ffbd2e;
+    background: rgba(255,189,46,0.05);
+    color: #ffbd2e;
+    font-size: 13px;
+    line-height: 1.6;
+    display: none;
+}
+
+.hint-box.visible { display: block; }
+
+.mode-indicator {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #444;
+    margin-bottom: 24px;
+}
+
+.mode-indicator.ai { color: #00ff41; }
