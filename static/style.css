@@ -403,4 +403,22 @@ button:hover {
     margin-bottom: 24px;
 }
 
+
 .mode-indicator.ai { color: #00ff41; }
+
+select {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #444;
+    color: #666;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    outline: none;
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+select option {
+    background: #0a0a0a;
+    color: #666;
+}

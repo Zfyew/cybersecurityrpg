@@ -4,6 +4,7 @@ let currentLevel = null;
 let selectedLog = null;
 let aiMode = false;
 let apiKey = null;
+let selectedModel = 'claude-sonnet-4-6';
 
 // static hints for base game
 const BASE_HINTS = {
@@ -29,6 +30,8 @@ async function startGame() {
     }
 
     const key = document.getElementById('api-key').value.trim();
+    selectedModel = document.getElementById('model-select').value;
+
     if (key) {
         apiKey = key;
         aiMode = true;
