@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Security RPG</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div id="scanlines"></div>
+
+    <!-- intro screen -->
+    <div id="intro-screen" class="screen active">
+        <div class="terminal-box">
+            <div class="terminal-header">
+                <span class="dot red"></span>
+                <span class="dot yellow"></span>
+                <span class="dot green"></span>
+                <span class="terminal-title">CYBER SECURITY RPG v1.0</span>
+            </div>
+            <div id="intro-text" class="terminal-body">
+                <p class="type-line">Initialising secure terminal...</p>
+                <p class="type-line">Loading threat database...</p>
+                <p class="type-line">All systems ready.</p>
+                <p class="type-line">&nbsp;</p>
+                <p class="type-line">You are a security analyst.</p>
+                <p class="type-line">Systems are under attack.</p>
+                <p class="type-line">Your job: investigate, contain, fight back.</p>
+                <p class="type-line">&nbsp;</p>
+            </div>
+            <div class="input-row">
+                <label class="prompt">Enter agent name: </label>
+                <input type="text" id="player-name" placeholder="your name" autofocus />
+                <button id="start-btn" onclick="startGame()">CONNECT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- main game screen -->
+    <div id="game-screen" class="screen">
+        <div class="hud">
+            <div class="hud-item">
+                <span class="hud-label">AGENT</span>
+                <span id="hud-name">—</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">HEALTH</span>
+                <div class="health-bar-wrap">
+                    <div id="health-bar" class="health-bar"></div>
+                </div>
+                <span id="hud-health">100</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">SCORE</span>
+                <span id="hud-score">0</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">TOOLS</span>
+                <span id="hud-tools">None</span>
+            </div>
+        </div>
+
+        <!-- level select -->
+        <div id="level-select" class="panel active">
+            <h2 class="panel-title">// SELECT MISSION</h2>
+            <div class="level-grid">
+                <div class="level-card" id="level-1-card" onclick="loadLevel(1)">
+                    <div class="level-num">01</div>
+                    <div class="level-name">Password Cracking</div>
+                    <div class="level-status" id="level-1-status">AVAILABLE</div>
+                </div>
+                <div class="level-card locked" id="level-2-card">
+                    <div class="level-num">02</div>
+                    <div class="level-name">Port Scanning</div>
+                    <div class="level-status" id="level-2-status">LOCKED</div>
+                </div>
+                <div class="level-card locked" id="level-3-card">
+                    <div class="level-num">03</div>
+                    <div class="level-name">Breach Investigation</div>
+                    <div class="level-status" id="level-3-status">LOCKED</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- level panel -->
+        <div id="level-panel" class="panel">
+            <button class="back-btn" onclick="showLevelSelect()">← BACK</button>
+            <h2 id="level-title" class="panel-title"></h2>
+            <p id="level-desc" class="level-desc"></p>
+            <div id="level-content"></div>
+            <div id="feedback" class="feedback hidden"></div>
+        </div>
+    </div>
+
+    <!-- game over screen -->
+    <div id="gameover-screen" class="screen">
+        <div class="terminal-box">
+            <div class="terminal-header">
+                <span class="dot red"></span>
+                <span class="dot yellow"></span>
+                <span class="dot green"></span>
+                <span class="terminal-title">SESSION TERMINATED</span>
+            </div>
+            <div class="terminal-body">
+                <p id="gameover-msg"></p>
+                <button onclick="location.reload()">RESTART</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/game.js"></script>
+</body>
+</html>
