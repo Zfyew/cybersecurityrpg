@@ -238,7 +238,135 @@ def ai_hint():
             return jsonify({'hint': hint})
 
     except Exception as e:
-        return jsonify({'hint': f'Could not reach Claude: {str(e)}'})   
+        return jsonify({'hint': f'Could not reach Claude: {str(e)}'})
+    
+@app.route('/api/ai_scenario', methods=['POST'])
+def ai_scenario():
+    data = request.json
+    key = data.get('api_key', '')
+    level_type = data.get('type', '')
+
+    if not key:
+        return jsonify({'error': 'No API key'})
+
+    prompts = {
+        'password': """Generate a cybersecurity training scenario about password strength. 
+Return ONLY valid JSON in this exact format, nothing else:
+{
+  "passwords": [
+    {"password": "example1", "weak": true},
+    {"password": "example2", "weak": false},
+    {"password": "example3", "weak": true},
+    {"password": "example4", "weak": false},
+    {"password": "example5", "weak": true},
+    {"password": "example6", "weak": false}
+  ]
+}
+Mix weak passwords (short, common words, simple patterns) with strong ones (long, random, mixed characters). Make them realistic.""",
+
+        'port': """Generate a cybersecurity training scenario about a suspicious network port.
+Return ONLY valid JSON in this exact format, nothing else:
+{
+  "port": 8080,
+  "service": "HTTP-Alt",
+  "threat": true,
+  "reason": "Explanation of why this is or isn't a threat in one sentence."
+}
+Use realistic port numbers and services. Vary between genuine threats and false positives.""",
+
+        'logs': """Generate a cybersecurity training scenario with 3 server log entries, one showing suspicious activity.
+Return ONLY valid JSON in this exact format, nothing else:
+{
+  "logs": [
+    "timestamp  event.type  user@corp.com  IP: x.x.x.x  STATUS  optional_detail",
+    "timestamp  event.type  user@corp.com  IP: x.x.x.x  STATUS  optional_detail",
+    "timestamp  event.type  user@corp.com  IP: x.x.x.x  STATUS  optional_detail"
+  ],
+  "answer": 1,
+  "reason": "Explanation of why this log entry is suspicious in one sentence."
+}
+Use realistic timestamps and IPs. The answer field is the zero-based index of the suspicious log."""
+    }
+
+    prompt = prompts.get(level_type)
+    if not prompt:
+        return jsonify({'error': 'Unknown level type'})
+
+    try:
+        import urllib.request
+        import json as json_lib
+
+        payload = json_lib.dumps({
+            "model": "claude-sonnet-4-20250514",
+            "max_tokens": 500,
+            "messages": [{"role": "user", "content": prompt}]
+        }).encode()
+
+        req = urllib.request.Request(
+            'https://api.anthropic.com/v1/messages',
+            data=payload,
+            headers={
+                'Content-Type': 'application/json',
+                'x-api-key': key,
+                'anthropic-version': '2023-06-01'
+            }
+        )
+
+        with urllib.request.urlopen(req) as response:
+            result = json_lib.loads(response.read())
+            text = result['content'][0]['text'].strip()
+            # strip markdown code fences if Claude wraps it
+            if text.startswith('```'):
+                text = text.split('```')[1]
+                if text.startswith('json'):
+                    text = text[4:]
+            scenario = json_lib.loads(text.strip())
+            return jsonify({'scenario': scenario})
+
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+
+@app.route('/api/ai_feedback', methods=['POST'])
+def ai_feedback():
+    data = request.json
+    key = data.get('api_key', '')
+    level = data.get('level')
+    correct = data.get('correct')
+    context = data.get('context', '')
+
+    if not key:
+        return jsonify({'feedback': ''})
+
+    outcome = "correctly identified" if correct else "got wrong"
+    prompt = f"A player {outcome} this cybersecurity scenario: {context}. Give one sentence of educational feedback about the real-world relevance of this scenario. Be direct and informative."
+
+    try:
+        import urllib.request
+        import json as json_lib
+
+        payload = json_lib.dumps({
+            "model": "claude-sonnet-4-20250514",
+            "max_tokens": 100,
+            "messages": [{"role": "user", "content": prompt}]
+        }).encode()
+
+        req = urllib.request.Request(
+            'https://api.anthropic.com/v1/messages',
+            data=payload,
+            headers={
+                'Content-Type': 'application/json',
+                'x-api-key': key,
+                'anthropic-version': '2023-06-01'
+            }
+        )
+
+        with urllib.request.urlopen(req) as response:
+            result = json_lib.loads(response.read())
+            return jsonify({'feedback': result['content'][0]['text'].strip()})
+
+    except Exception as e:
+        return jsonify({'feedback': ''})
     
 
 if __name__ == '__main__':
