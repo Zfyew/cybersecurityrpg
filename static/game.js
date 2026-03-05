@@ -17,7 +17,8 @@ const BASE_HINTS = {
     vulnerability: "Distinguish between fixing the root cause and implementing a compensating control. Patching is a fix, a WAF is a control."
 }
 
-// transition helpers
+// ── transition helpers ────────────────────────────────────────────────────────
+
 function showLoadingBar() {
     const bar = document.getElementById('loading-bar');
     bar.style.width = '0%';
@@ -37,6 +38,7 @@ function completeLoadingBar() {
 
 function screenFlash() {
     const flash = document.getElementById('screen-flash');
+    if (!flash) return;
     flash.classList.remove('flash');
     void flash.offsetWidth;
     flash.classList.add('flash');
@@ -61,7 +63,7 @@ function popValue(id) {
 
 function transitionPanels(fromId, toId, callback) {
     const from = document.getElementById(fromId);
-    const to = document.getElementById(toId);
+    const to = toId ? document.getElementById(toId) : null;
 
     if (from) {
         from.classList.add('fade-out');
@@ -82,6 +84,8 @@ function transitionPanels(fromId, toId, callback) {
     }
 }
 
+// ── boot animation ────────────────────────────────────────────────────────────
+
 function animateIntro() {
     const lines = document.querySelectorAll('.boot-line');
     lines.forEach((line, i) => {
@@ -91,6 +95,8 @@ function animateIntro() {
 
 animateIntro();
 
+// ── mode selection ────────────────────────────────────────────────────────────
+
 function selectMode(mode) {
     document.getElementById('mode-base').classList.remove('active');
     document.getElementById('mode-ai').classList.remove('active');
@@ -98,6 +104,8 @@ function selectMode(mode) {
     document.getElementById('ai-fields').style.display = mode === 'ai' ? 'block' : 'none';
     if (mode === 'base') { aiMode = false; apiKey = null; }
 }
+
+// ── start game ────────────────────────────────────────────────────────────────
 
 async function startGame() {
     const name = document.getElementById('player-name').value.trim();
@@ -116,6 +124,8 @@ async function startGame() {
         selectedModel = document.getElementById('model-select').value;
     }
 
+    screenFlash();
+
     const res = await fetch('/api/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -125,30 +135,51 @@ async function startGame() {
     const data = await res.json();
     player = data.player;
 
-    document.getElementById('intro-screen').classList.remove('active');
-    document.getElementById('game-screen').classList.add('active');
-    updateHUD();
-    updateDomainTracker();
-    loadLevelMeta();
+    setTimeout(() => {
+        document.getElementById('intro-screen').classList.remove('active');
+        const gameScreen = document.getElementById('game-screen');
+        gameScreen.classList.add('active', 'fade-in');
+        setTimeout(() => gameScreen.classList.remove('fade-in'), 400);
+        updateHUD();
+        updateDomainTracker();
+        loadLevelMeta();
+    }, 200);
 }
 
 document.getElementById('player-name').addEventListener('keydown', e => {
     if (e.key === 'Enter') startGame();
 });
 
+// ── level meta ────────────────────────────────────────────────────────────────
+
 async function loadLevelMeta() {
     const res = await fetch('/api/level_meta');
     if (!res.ok) return;
     const data = await res.json();
 
+    const descriptions = {
+        'password': 'Identify the weakest credential before the attacker does.',
+        'port': 'Analyse an exposed network service and decide whether to block it.',
+        'logs': 'Hunt the attacker through live log data.',
+        'social_engineering': 'Analyse a flagged email for phishing indicators.',
+        'malware': 'Identify a threat from endpoint behavioural telemetry.',
+        'cryptography': 'Choose the correct cryptographic approach for the scenario.',
+        'access_control': 'Evaluate an access request against least privilege.',
+        'vulnerability': 'Determine the correct mitigation for a critical CVE.'
+    };
+
     data.meta.forEach((m, i) => {
         const num = i + 1;
         const nameEl = document.getElementById(`level-${num}-name`);
         const domainEl = document.getElementById(`level-${num}-domain`);
+        const descEl = document.getElementById(`level-${num}-desc`);
         if (nameEl) nameEl.textContent = m.title.toUpperCase();
         if (domainEl) domainEl.textContent = `Security+ — ${m.domain}`;
+        if (descEl) descEl.textContent = descriptions[m.type] || 'Investigate and neutralise the threat.';
     });
 }
+
+// ── HUD ───────────────────────────────────────────────────────────────────────
 
 function updateHUD() {
     if (!player) return;
@@ -171,7 +202,7 @@ function updateHUD() {
     }
 
     const bar = document.getElementById('health-bar');
-    bar.style.width = player.health + '%';
+    bar.style.width = Math.max(0, player.health) + '%';
     bar.style.background = player.health > 60 ? '#f5c518' : player.health > 30 ? '#ff8800' : '#ff003c';
 
     const certBar = document.getElementById('cert-bar');
@@ -181,6 +212,8 @@ function updateHUD() {
     for (let i = 1; i <= 3; i++) {
         const card = document.getElementById(`level-${i}-card`);
         const status = document.getElementById(`level-${i}-status`);
+        if (!card || !status) continue;
+
         if (completed.includes(i)) {
             card.classList.remove('locked');
             card.style.opacity = '0.5';
@@ -220,15 +253,19 @@ function updateDomainTracker() {
     });
 }
 
+// ── navigation ────────────────────────────────────────────────────────────────
+
 function showLevelSelect() {
-    document.getElementById('level-panel').classList.remove('active');
-    document.getElementById('level-select').classList.add('active');
+    screenFlash();
+    transitionPanels('level-panel', 'level-select', null);
     document.getElementById('feedback').classList.add('hidden');
     document.getElementById('domain-card').classList.add('hidden');
     levelAnswered = false;
     updateDomainTracker();
     loadLevelMeta();
 }
+
+// ── load level ────────────────────────────────────────────────────────────────
 
 async function loadLevel(num) {
     currentLevel = num;
@@ -238,7 +275,6 @@ async function loadLevel(num) {
     showLoadingBar();
     screenFlash();
 
-    // pulse the selected card
     const card = document.getElementById(`level-${num}-card`);
     if (card) {
         card.classList.add('pulse');
@@ -248,23 +284,26 @@ async function loadLevel(num) {
     const params = aiMode
         ? `?ai_mode=true&api_key=${encodeURIComponent(apiKey)}&model=${encodeURIComponent(selectedModel)}`
         : '';
+
     const res = await fetch(`/api/level/${num}${params}`);
     if (!res.ok) { completeLoadingBar(); return; }
     const data = await res.json();
 
     completeLoadingBar();
 
-    transitionPanels('level-select', null, () => {
-        document.getElementById('level-panel').classList.add('active', 'fade-in');
-        setTimeout(() => document.getElementById('level-panel').classList.remove('fade-in'), 400);
-    });
+    // fade out level select, then show level panel
+    const levelSelect = document.getElementById('level-select');
+    const levelPanel = document.getElementById('level-panel');
 
-    document.getElementById('level-select').classList.remove('active');
-    document.getElementById('level-panel').classList.add('active');
+    levelSelect.classList.add('fade-out');
+    setTimeout(() => {
+        levelSelect.classList.remove('active', 'fade-out');
+        levelPanel.classList.add('active', 'fade-in');
+        setTimeout(() => levelPanel.classList.remove('fade-in'), 400);
+    }, 300);
+
     document.getElementById('level-title').textContent = data.title.toUpperCase();
-
-    // glitch the title in
-    setTimeout(() => glitchTitle(document.getElementById('level-title')), 100);
+    setTimeout(() => glitchTitle(document.getElementById('level-title')), 400);
 
     document.getElementById('level-desc').textContent = data.description;
     document.getElementById('feedback').classList.add('hidden');
@@ -303,6 +342,8 @@ async function loadLevel(num) {
     else if (data.type === 'vulnerability') renderVulnerability(data, content);
 }
 
+// ── hints ─────────────────────────────────────────────────────────────────────
+
 async function showHint(levelType, levelData) {
     const hintBox = document.getElementById('hint-box');
     hintBox.classList.add('visible');
@@ -326,12 +367,14 @@ async function showHint(levelType, levelData) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ context, api_key: apiKey, model: selectedModel })
         });
-        const data = await res.json();
-        hintBox.textContent = data.hint || 'Could not reach Claude.';
+        const d = await res.json();
+        hintBox.textContent = d.hint || 'Could not reach Claude.';
     } catch (e) {
         hintBox.textContent = 'Connection to Claude failed.';
     }
 }
+
+// ── lock options ──────────────────────────────────────────────────────────────
 
 function lockAllOptions() {
     document.querySelectorAll('.cp-password-btn, .cp-btn-block, .cp-btn-allow, .cp-option-btn, .cp-confirm-btn').forEach(btn => {
@@ -344,6 +387,8 @@ function lockAllOptions() {
         e.style.cursor = 'default';
     });
 }
+
+// ── render functions ──────────────────────────────────────────────────────────
 
 function renderPasswordLevel(data, container) {
     const label = document.createElement('p');
@@ -444,7 +489,6 @@ function renderLogLevel(data, container) {
 }
 
 function renderSocialEngineering(data, container) {
-    // render a fake email UI
     const emailBox = document.createElement('div');
     emailBox.style.cssText = 'background:#06060a; border:1px solid #2a2a3e; margin-bottom:20px;';
 
@@ -564,6 +608,8 @@ function renderOptions(data, container) {
     container.appendChild(optionsWrap);
 }
 
+// ── submit answer ─────────────────────────────────────────────────────────────
+
 async function submitAnswer(answer) {
     if (levelAnswered) return;
 
@@ -578,7 +624,6 @@ async function submitAnswer(answer) {
     updateHUD();
 
     const feedback = document.getElementById('feedback');
-    feedback.classList.remove('hidden', 'wrong');
     feedback.className = 'cp-feedback';
 
     if (data.correct) {
@@ -642,6 +687,8 @@ async function submitAnswer(answer) {
     }
 }
 
+// ── domain card ───────────────────────────────────────────────────────────────
+
 function showDomainCard(domainInfo) {
     const card = document.getElementById('domain-card');
     card.classList.remove('hidden', 'slide-in');
@@ -655,71 +702,7 @@ function showDomainCard(domainInfo) {
     tip.className = 'cp-domain-value highlight';
 }
 
-function gameOver(won) {
-    screenFlash();
-    setTimeout(() => {
-        document.getElementById('game-screen').classList.remove('active');
-        document.getElementById('gameover-screen').classList.add('active');
-
-    const title = document.getElementById('gameover-title');
-    const msg = document.getElementById('gameover-msg');
-
-    if (won) {
-        title.textContent = '// MISSION COMPLETE — DEBRIEF';
-        title.style.color = '#f5c518';
-
-        const domainSummary = player.domain_scores
-            ? Object.entries(player.domain_scores)
-                .filter(([, s]) => s.attempted > 0)
-                .map(([d, s]) => `<div style="font-size:12px; color:#8888aa; margin-bottom:4px;">
-                    <span style="color:#00d4ff; min-width:280px; display:inline-block;">${d}</span>
-                    <span style="color:#f5c518;">${s.correct}/${s.attempted} correct</span>
-                </div>`).join('')
-            : '';
-
-        msg.innerHTML = `
-            <p style="color:#f5c518; font-family:'Rajdhani',sans-serif; font-size:22px; letter-spacing:4px; margin-bottom:20px;">${getRating(player.score, player.health)}</p>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
-                <div>
-                    <div style="font-size:10px; color:#8888aa; letter-spacing:3px; margin-bottom:4px;">AGENT</div>
-                    <div style="font-size:16px; font-family:'Rajdhani',sans-serif; color:#e8e8f4;">${player.name.toUpperCase()}</div>
-                </div>
-                <div>
-                    <div style="font-size:10px; color:#8888aa; letter-spacing:3px; margin-bottom:4px;">FINAL SCORE</div>
-                    <div style="font-size:16px; font-family:'Rajdhani',sans-serif; color:#f5c518;">${player.score}</div>
-                </div>
-                <div>
-                    <div style="font-size:10px; color:#8888aa; letter-spacing:3px; margin-bottom:4px;">INTEGRITY</div>
-                    <div style="font-size:16px; font-family:'Rajdhani',sans-serif; color:${player.health > 60 ? '#f5c518' : player.health > 30 ? '#ff8800' : '#ff003c'};">${player.health}%</div>
-                </div>
-                <div>
-                    <div style="font-size:10px; color:#8888aa; letter-spacing:3px; margin-bottom:4px;">TOOLS ACQUIRED</div>
-                    <div style="font-size:13px; color:#00d4ff;">${player.inventory.join(', ') || 'None'}</div>
-                </div>
-            </div>
-            ${domainSummary ? `<div style="border-top:1px solid #2a2a3e; padding-top:16px; margin-bottom:16px;">
-                <div style="font-size:10px; color:#8888aa; letter-spacing:3px; margin-bottom:12px;">SECURITY+ DOMAIN PERFORMANCE</div>
-                ${domainSummary}
-            </div>` : ''}
-            <p style="color:#8888aa; font-size:11px;">All threats neutralised, ${player.name}. Stay vigilant.</p>
-        `;
-    } else {
-        title.textContent = '// AGENT DOWN — CONNECTION LOST';
-        title.style.color = '#ff003c';
-        msg.innerHTML = `
-            <p style="color:#ff003c; font-family:'Rajdhani',sans-serif; font-size:22px; letter-spacing:4px; margin-bottom:20px;">INTEGRITY FAILURE</p>
-            <p style="margin-bottom:8px; color:#e8e8f4;">Agent: ${player.name.toUpperCase()}</p>
-            <p style="margin-bottom:20px; color:#f5c518;">Final score: ${player.score}</p>
-            <p style="color:#8888aa; font-size:12px;">You ran out of integrity. The breach was not contained.</p>
-        `;
-    }
-
-    const restartBtn = document.createElement('button');
-    restartBtn.style.marginTop = '24px';
-    restartBtn.textContent = '↺ NEW SESSION';
-    restartBtn.onclick = () => location.reload();
-    msg.appendChild(restartBtn);
-}, 200);
+// ── game over ─────────────────────────────────────────────────────────────────
 
 function getRating(score, health) {
     const total = score + health;
@@ -727,5 +710,76 @@ function getRating(score, health) {
     if (total >= 400) return 'A-TIER // SENIOR ANALYST';
     if (total >= 300) return 'B-TIER // FIELD OPERATIVE';
     return 'C-TIER // ROOKIE AGENT';
-    
+}
+
+function gameOver(won) {
+    screenFlash();
+    setTimeout(() => {
+        document.getElementById('game-screen').classList.remove('active');
+        const goScreen = document.getElementById('gameover-screen');
+        goScreen.classList.add('active', 'fade-in');
+        setTimeout(() => goScreen.classList.remove('fade-in'), 400);
+
+        const title = document.getElementById('gameover-title');
+        const msg = document.getElementById('gameover-msg');
+
+        if (won) {
+            title.textContent = '// MISSION COMPLETE — DEBRIEF';
+            title.style.color = '#f5c518';
+
+            const domainSummary = player.domain_scores
+                ? Object.entries(player.domain_scores)
+                    .filter(([, s]) => s.attempted > 0)
+                    .map(([d, s]) => `
+                        <div style="font-size:12px; color:#8888aa; margin-bottom:4px;">
+                            <span style="color:#00d4ff; min-width:280px; display:inline-block;">${d}</span>
+                            <span style="color:#f5c518;">${s.correct}/${s.attempted} correct</span>
+                        </div>`).join('')
+                : '';
+
+            msg.innerHTML = `
+                <p style="color:#f5c518; font-family:'Rajdhani',sans-serif; font-size:22px; letter-spacing:4px; margin-bottom:20px;">${getRating(player.score, player.health)}</p>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+                    <div>
+                        <div style="font-size:10px; color:#8888aa; letter-spacing:3px; margin-bottom:4px;">AGENT</div>
+                        <div style="font-size:16px; font-family:'Rajdhani',sans-serif; color:#e8e8f4;">${player.name.toUpperCase()}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:10px; color:#8888aa; letter-spacing:3px; margin-bottom:4px;">FINAL SCORE</div>
+                        <div style="font-size:16px; font-family:'Rajdhani',sans-serif; color:#f5c518;">${player.score}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:10px; color:#8888aa; letter-spacing:3px; margin-bottom:4px;">INTEGRITY</div>
+                        <div style="font-size:16px; font-family:'Rajdhani',sans-serif; color:${player.health > 60 ? '#f5c518' : player.health > 30 ? '#ff8800' : '#ff003c'};">${player.health}%</div>
+                    </div>
+                    <div>
+                        <div style="font-size:10px; color:#8888aa; letter-spacing:3px; margin-bottom:4px;">TOOLS ACQUIRED</div>
+                        <div style="font-size:13px; color:#00d4ff;">${player.inventory.join(', ') || 'None'}</div>
+                    </div>
+                </div>
+                ${domainSummary ? `
+                <div style="border-top:1px solid #2a2a3e; padding-top:16px; margin-bottom:16px;">
+                    <div style="font-size:10px; color:#8888aa; letter-spacing:3px; margin-bottom:12px;">SECURITY+ DOMAIN PERFORMANCE</div>
+                    ${domainSummary}
+                </div>` : ''}
+                <p style="color:#8888aa; font-size:11px;">All threats neutralised, ${player.name}. Stay vigilant.</p>
+            `;
+        } else {
+            title.textContent = '// AGENT DOWN — CONNECTION LOST';
+            title.style.color = '#ff003c';
+            msg.innerHTML = `
+                <p style="color:#ff003c; font-family:'Rajdhani',sans-serif; font-size:22px; letter-spacing:4px; margin-bottom:20px;">INTEGRITY FAILURE</p>
+                <p style="margin-bottom:8px; color:#e8e8f4;">Agent: ${player.name.toUpperCase()}</p>
+                <p style="margin-bottom:20px; color:#f5c518;">Final score: ${player.score}</p>
+                <p style="color:#8888aa; font-size:12px;">You ran out of integrity. The breach was not contained.</p>
+            `;
+        }
+
+        const restartBtn = document.createElement('button');
+        restartBtn.style.marginTop = '24px';
+        restartBtn.textContent = '↺ NEW SESSION';
+        restartBtn.onclick = () => location.reload();
+        msg.appendChild(restartBtn);
+
+    }, 200);
 }

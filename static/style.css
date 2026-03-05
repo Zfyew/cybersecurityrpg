@@ -841,3 +841,231 @@ select option { background: var(--darker); color: var(--text); }
     20% { opacity: 0.08; }
     100% { opacity: 0; }
 }
+
+/* ── responsive scaling ──────────────────────────────────────────────────── */
+
+/* base is designed around 1280px — scale up for larger screens */
+
+@media (min-width: 1440px) {
+    .cp-box {
+        width: 960px;
+    }
+
+    .cp-body {
+        padding: 36px;
+    }
+
+    .cp-ascii {
+        font-size: 12px;
+    }
+
+    .cp-subtitle {
+        font-size: 13px;
+        margin-bottom: 36px;
+    }
+
+    .boot-line {
+        font-size: 14px;
+    }
+
+    .cp-mode-name {
+        font-size: 16px;
+    }
+
+    .cp-mode-desc {
+        font-size: 13px;
+    }
+
+    .cp-panel {
+        padding: 40px 56px;
+        max-width: 1200px;
+    }
+
+    .cp-panel-title {
+        font-size: 24px;
+    }
+
+    .cp-level-grid {
+        gap: 20px;
+    }
+
+    .cp-level-card {
+        padding: 24px;
+    }
+
+    .cp-level-num {
+        font-size: 52px;
+    }
+
+    .cp-level-name {
+        font-size: 17px;
+    }
+
+    .cp-level-domain {
+        font-size: 11px;
+    }
+
+    .cp-level-desc {
+        font-size: 12px;
+    }
+
+    .cp-hud {
+        padding: 16px 48px;
+    }
+
+    .cp-hud-title {
+        font-size: 22px;
+        letter-spacing: 6px;
+    }
+
+    .cp-hud-value {
+        font-size: 18px;
+    }
+
+    .cp-hud-value.small {
+        font-size: 13px;
+    }
+
+    .cp-health-wrap {
+        width: 160px;
+        height: 7px;
+    }
+
+    .cp-level-desc-text {
+        font-size: 15px;
+    }
+
+    .cp-scan-output {
+        font-size: 14px;
+    }
+
+    .cp-log-entry {
+        font-size: 13px;
+        padding: 16px 20px;
+    }
+
+    .cp-password-grid {
+        gap: 12px;
+    }
+
+    .cp-password-btn {
+        font-size: 15px;
+        padding: 16px 20px;
+    }
+
+    .cp-domain-card .cp-domain-value {
+        font-size: 13px;
+    }
+
+    .cp-domain-label {
+        font-size: 11px;
+        min-width: 120px;
+    }
+
+    .cp-cert-section {
+        padding: 24px;
+    }
+
+    button {
+        font-size: 14px;
+        padding: 12px 28px;
+    }
+
+    .cp-hint-btn {
+        font-size: 12px;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+        font-size: 15px;
+    }
+
+    .cp-prompt {
+        font-size: 15px;
+    }
+
+    .cp-footer {
+        font-size: 11px;
+    }
+}
+
+@media (min-width: 1920px) {
+    .cp-box {
+        width: 1100px;
+    }
+
+    .cp-panel {
+        max-width: 1400px;
+        padding: 48px 72px;
+    }
+
+    .cp-level-grid {
+        gap: 24px;
+    }
+
+    .cp-level-card {
+        padding: 28px;
+    }
+
+    .cp-level-num {
+        font-size: 64px;
+    }
+
+    .cp-level-name {
+        font-size: 18px;
+    }
+
+    .cp-panel-title {
+        font-size: 26px;
+    }
+
+    .cp-hud {
+        padding: 20px 64px;
+    }
+
+    .cp-hud-title {
+        font-size: 24px;
+    }
+
+    .cp-hud-value {
+        font-size: 20px;
+    }
+
+    .cp-health-wrap {
+        width: 200px;
+        height: 8px;
+    }
+
+    .cp-scan-output {
+        font-size: 15px;
+    }
+
+    .cp-log-entry {
+        font-size: 14px;
+        padding: 18px 24px;
+    }
+
+    .cp-password-btn {
+        font-size: 16px;
+        padding: 18px 24px;
+    }
+
+    button {
+        font-size: 15px;
+        padding: 13px 32px;
+    }
+
+    .boot-line {
+        font-size: 15px;
+    }
+}
+
+/* also make the game screen scroll properly on any screen */
+#game-screen {
+    min-height: 100vh;
+    overflow-y: auto;
+}
+
+.cp-panel {
+    padding-bottom: 60px;
+}
