@@ -1,7 +1,15 @@
-# Flask server — handles game state, routing and scoring
+# Flask server — RPG game with Security+ certification integration
 from flask import Flask, render_template, request, jsonify, session
 import random
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from data.rpg_scenarios import (
+    PORT_SCENARIOS, LOG_SETS, PASSWORDS_EASY, PASSWORDS_HARD, DOMAIN_MAP
+)
+from data.security_plus import QUESTIONS, DOMAINS
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -11,73 +19,6 @@ LEVELS = {
     2: {'title': 'Port Scanning', 'description': 'An unknown device appeared on the network. Analyse the open port and decide whether to block it.', 'type': 'port'},
     3: {'title': 'Breach Investigation', 'description': 'Alerts are firing. Read the logs and identify which entry shows the attacker.', 'type': 'logs'}
 }
-
-# easy and hard password sets — hard set unlocks after first completion
-PASSWORDS_EASY = [
-    {"password": "password123", "weak": True},
-    {"password": "Tr0ub4dor&3", "weak": False},
-    {"password": "qwerty", "weak": True},
-    {"password": "xK#9mP2$vL8n", "weak": False},
-    {"password": "123456", "weak": True},
-    {"password": "C0rrect-Horse-Battery", "weak": False}
-]
-
-PASSWORDS_HARD = [
-    {"password": "iloveyou2024", "weak": True},
-    {"password": "9$kLm#2pXnW!", "weak": False},
-    {"password": "letmein", "weak": True},
-    {"password": "Vx7@qR3!mKp2", "weak": False},
-    {"password": "monkey123", "weak": True},
-    {"password": "Kj#8nP$2mLx9", "weak": False}
-]
-
-PORT_SCENARIOS = [
-    {'port': 23, 'service': 'Telnet', 'threat': True, 'reason': 'Telnet sends data in plain text. Should always be disabled.'},
-    {'port': 443, 'service': 'HTTPS', 'threat': False, 'reason': 'HTTPS is expected on a web server. Nothing suspicious here.'},
-    {'port': 3389, 'service': 'RDP', 'threat': True, 'reason': 'RDP exposed to the internet is a common attack vector.'},
-    {'port': 22, 'service': 'SSH', 'threat': False, 'reason': 'SSH is a secure protocol. Expected on a Linux server.'},
-    {'port': 21, 'service': 'FTP', 'threat': True, 'reason': 'FTP transmits credentials in plain text. Should be replaced with SFTP.'},
-    {'port': 1433, 'service': 'MSSQL', 'threat': True, 'reason': 'A database port exposed to the internet is a serious risk.'}
-]
-
-LOG_SETS = [
-    {
-        'logs': [
-            "09:14:22  user.login  alice@corp.com  IP: 192.168.1.5  SUCCESS",
-            "09:15:01  user.login  bob@corp.com  IP: 185.220.101.45  SUCCESS  (TOR exit node)",
-            "09:16:44  file.access  charlie@corp.com  IP: 192.168.1.8  SUCCESS"
-        ],
-        'answer': 1,
-        'reason': 'Login from a TOR exit node is a major red flag. Likely credential stuffing.'
-    },
-    {
-        'logs': [
-            "14:02:11  admin.login  sysadmin  IP: 10.0.0.1  SUCCESS",
-            "14:03:55  file.download  sysadmin  IP: 10.0.0.1  200 files downloaded",
-            "14:04:01  admin.login  sysadmin  IP: 203.0.113.99  SUCCESS  (outside business hours)"
-        ],
-        'answer': 2,
-        'reason': 'Same account logged in from two different IPs within seconds — impossible without credential theft.'
-    },
-    {
-        'logs': [
-            "11:30:00  user.login  dave@corp.com  IP: 192.168.1.12  FAILED x5 then SUCCESS",
-            "11:31:20  user.login  eve@corp.com  IP: 192.168.1.9  SUCCESS",
-            "11:32:45  user.login  frank@corp.com  IP: 192.168.1.14  SUCCESS"
-        ],
-        'answer': 0,
-        'reason': 'Five failed attempts followed by a success is a classic brute force pattern.'
-    },
-    {
-        'logs': [
-            "16:05:11  file.access  grace@corp.com  IP: 192.168.1.20  SUCCESS",
-            "16:05:44  user.login  grace@corp.com  IP: 192.168.1.20  SUCCESS",
-            "16:06:01  data.export  grace@corp.com  IP: 192.168.1.20  8500 records exported"
-        ],
-        'answer': 2,
-        'reason': 'Exporting 8500 records in one go outside normal working patterns is a data exfiltration indicator.'
-    }
-]
 
 @app.route('/')
 def index():
@@ -93,7 +34,9 @@ def start():
         'level': 1,
         'inventory': [],
         'completed': [],
-        'run': 1
+        'run': 1,
+        'domain_scores': {domain: {'correct': 0, 'attempted': 0} for domain in DOMAINS},
+        'cert_progress': 0
     }
     return jsonify({'status': 'ok', 'player': session['player']})
 
@@ -116,60 +59,48 @@ def get_level(level_num):
     hard_mode = player.get('run', 1) > 1
     ai_mode = request.args.get('ai_mode') == 'true'
     api_key = request.args.get('api_key', '')
+    model = request.args.get('model', 'claude-sonnet-4-6')
 
-    # if AI mode, fetch a generated scenario
     if ai_mode and api_key:
-        import urllib.request
-        import json as json_lib
+        try:
+            import urllib.request
+            import json as json_lib
 
-        prompts = {
-    'password': f"""You are generating content for a cybersecurity training game. 
+            prompts = {
+                'password': f"""You are generating content for a cybersecurity training game mapped to CompTIA Security+ SY0-701 exam objective 1.1.
 Create a password strength challenge for run number {player.get('run', 1)}.
-
 Rules:
-- Generate exactly 6 passwords
-- 3 must be weak, 3 must be strong
-- Weak passwords: common words, keyboard patterns, names with numbers, dictionary words, short length
-- Strong passwords: 12+ chars, mix of uppercase/lowercase/numbers/symbols, no dictionary words
-- Do NOT use password123, qwerty, 123456 or other overused examples — be creative and realistic
-- Vary difficulty based on run {player.get('run', 1)} — higher runs should have more subtle weak passwords
-- Strong passwords should look like real generated passwords, not textbook examples
-
-Return ONLY this JSON, no markdown, no explanation:
+- Generate exactly 6 passwords, 3 weak and 3 strong
+- Weak: common words, keyboard patterns, names with numbers, dictionary words, short
+- Strong: 12+ chars, mixed case, numbers, symbols, no dictionary words
+- Do NOT use password123, qwerty, 123456 — be creative
+- Run {player.get('run', 1)} difficulty — higher runs should have more subtle weak passwords
+Return ONLY this JSON, nothing else:
 {{"passwords": [{{"password": "example", "weak": true}}]}}""",
 
-    'port': f"""You are generating content for a cybersecurity training game.
-Create a port scanning scenario for run number {player.get('run', 1)}.
-
+                'port': f"""You are generating content for a cybersecurity training game mapped to CompTIA Security+ SY0-701 exam objective 3.3.
+Create a network port security scenario for run number {player.get('run', 1)}.
 Rules:
-- Use a realistic enterprise network scenario
-- Mix genuine threats with false positives across runs
-- Higher run numbers ({player.get('run', 1)}) should use more subtle or ambiguous cases
-- Avoid overused examples like port 23 Telnet or port 3389 RDP on early runs
-- Consider: unusual high ports, database ports, management interfaces, legacy protocols
-- The reason must explain the real-world security implication clearly in one sentence
-
-Return ONLY this JSON, no markdown, no explanation:
+- Use a realistic enterprise scenario
+- Higher runs ({player.get('run', 1)}) should use more subtle or ambiguous cases
+- Avoid overused examples like port 23 Telnet on early runs
+- The reason must clearly explain the real-world security implication
+Return ONLY this JSON, nothing else:
 {{"port": 8080, "service": "HTTP-Alt", "threat": true, "reason": "one sentence"}}""",
 
-    'logs': f"""You are generating content for a cybersecurity training game.
+                'logs': f"""You are generating content for a cybersecurity training game mapped to CompTIA Security+ SY0-701 exam objective 4.2.
 Create a log analysis challenge for run number {player.get('run', 1)}.
-
 Rules:
-- Generate exactly 3 log entries, exactly one must be suspicious
-- Use realistic enterprise log format with timestamps, event types, usernames, IPs
-- Run {player.get('run', 1)} difficulty: {'easy — obvious indicators like TOR nodes or brute force' if player.get('run', 1) == 1 else 'medium — subtler indicators like impossible travel or off-hours access' if player.get('run', 1) == 2 else 'hard — very subtle indicators requiring careful analysis'}
-- The suspicious entry should reflect a real attack technique: credential stuffing, lateral movement, data exfiltration, privilege escalation, impossible travel, brute force, insider threat
-- Normal entries must look completely legitimate
-- answer is the zero-based index of the suspicious entry
+- Generate exactly 3 log entries, exactly one suspicious
+- Difficulty for run {player.get('run', 1)}: {'easy — obvious indicators' if player.get('run', 1) == 1 else 'medium — subtler indicators like impossible travel or off-hours access' if player.get('run', 1) == 2 else 'hard — very subtle indicators'}
+- Reflect real attack techniques: credential stuffing, lateral movement, data exfiltration, brute force
+- answer is zero-based index of suspicious entry
+Return ONLY this JSON, nothing else:
+{{"logs": ["log1", "log2", "log3"], "answer": 1, "reason": "one sentence"}}"""
+            }
 
-Return ONLY this JSON, no markdown, no explanation:
-{{"logs": ["log1", "log2", "log3"], "answer": 1, "reason": "one sentence explanation of the attack technique"}}"""
-}
-
-        try:
             payload = json_lib.dumps({
-                "model": "claude-sonnet-4-6",
+                "model": model,
                 "max_tokens": 500,
                 "messages": [{"role": "user", "content": prompts[level_type]}]
             }).encode()
@@ -200,7 +131,8 @@ Return ONLY this JSON, no markdown, no explanation:
                         'description': LEVELS[level_num]['description'],
                         'passwords': ai_data['passwords'],
                         'hard_mode': hard_mode,
-                        'ai_generated': True
+                        'ai_generated': True,
+                        'domain_info': DOMAIN_MAP[level_num]
                     })
                 elif level_type == 'port':
                     session['current_scenario'] = ai_data
@@ -211,7 +143,8 @@ Return ONLY this JSON, no markdown, no explanation:
                         'port': ai_data['port'],
                         'service': ai_data['service'],
                         'hard_mode': hard_mode,
-                        'ai_generated': True
+                        'ai_generated': True,
+                        'domain_info': DOMAIN_MAP[level_num]
                     })
                 elif level_type == 'logs':
                     session['current_logs'] = ai_data
@@ -221,21 +154,23 @@ Return ONLY this JSON, no markdown, no explanation:
                         'description': LEVELS[level_num]['description'],
                         'logs': ai_data['logs'],
                         'hard_mode': hard_mode,
-                        'ai_generated': True
+                        'ai_generated': True,
+                        'domain_info': DOMAIN_MAP[level_num]
                     })
         except Exception:
-            # fall back to static if AI call fails
             pass
 
     # static fallback
     if level_type == 'password':
-        passwords = PASSWORDS_HARD if hard_mode else PASSWORDS_EASY
+        from data.rpg_scenarios import get_random_passwords
+        passwords = get_random_passwords(hard_mode)
         return jsonify({
             'type': 'password',
             'title': LEVELS[level_num]['title'],
             'description': LEVELS[level_num]['description'],
             'passwords': passwords,
-            'hard_mode': hard_mode
+            'hard_mode': hard_mode,
+            'domain_info': DOMAIN_MAP[level_num]
         })
     elif level_type == 'port':
         scenario = random.choice(PORT_SCENARIOS)
@@ -246,7 +181,8 @@ Return ONLY this JSON, no markdown, no explanation:
             'description': LEVELS[level_num]['description'],
             'port': scenario['port'],
             'service': scenario['service'],
-            'hard_mode': hard_mode
+            'hard_mode': hard_mode,
+            'domain_info': DOMAIN_MAP[level_num]
         })
     elif level_type == 'logs':
         log_set = random.choice(LOG_SETS)
@@ -256,7 +192,8 @@ Return ONLY this JSON, no markdown, no explanation:
             'title': LEVELS[level_num]['title'],
             'description': LEVELS[level_num]['description'],
             'logs': log_set['logs'],
-            'hard_mode': hard_mode
+            'hard_mode': hard_mode,
+            'domain_info': DOMAIN_MAP[level_num]
         })
 
 @app.route('/api/answer', methods=['POST'])
@@ -292,8 +229,14 @@ def answer():
             correct = (ans == log_set['answer'])
             reason = log_set['reason']
 
+    # update domain score
+    domain = DOMAIN_MAP.get(level, {}).get('domain', '')
+    if domain and domain in player['domain_scores']:
+        player['domain_scores'][domain]['attempted'] += 1
+        if correct:
+            player['domain_scores'][domain]['correct'] += 1
+
     if correct:
-        # harder runs give more points
         base_points = level * 100
         points = int(base_points * 1.5) if hard_mode else base_points
         if level not in player['completed']:
@@ -309,7 +252,6 @@ def answer():
         if tools[level] not in player['inventory']:
             player['inventory'].append(tools[level])
 
-        # if all levels done, increment run counter and reset for next run
         if len(player['completed']) == 3:
             player['run'] = player.get('run', 1) + 1
             player['completed'] = []
@@ -317,11 +259,83 @@ def answer():
             player['health'] = min(100, player['health'] + 20)
 
         session['player'] = player
-        return jsonify({'correct': True, 'reason': reason, 'points': points, 'player': player})
+        return jsonify({
+            'correct': True,
+            'reason': reason,
+            'points': points,
+            'player': player,
+            'domain_info': DOMAIN_MAP.get(level, {})
+        })
     else:
         player['health'] -= 25 if not hard_mode else 35
         session['player'] = player
-        return jsonify({'correct': False, 'reason': reason, 'player': player})
+        return jsonify({
+            'correct': False,
+            'reason': reason,
+            'player': player,
+            'domain_info': DOMAIN_MAP.get(level, {})
+        })
+
+@app.route('/api/quiz/question', methods=['GET'])
+def get_question():
+    player = session.get('player')
+    if not player:
+        return jsonify({'error': 'No session'}), 400
+
+    domain = request.args.get('domain', None)
+
+    if domain and domain in DOMAINS:
+        pool = DOMAINS[domain]
+    else:
+        pool = QUESTIONS
+
+    if not pool:
+        return jsonify({'error': 'No questions available'}), 404
+
+    q = random.choice(pool)
+    session['current_question'] = q
+
+    return jsonify({
+        'id': q['id'],
+        'domain': q['domain'],
+        'objective': q['objective'],
+        'question': q['question'],
+        'options': q['options']
+    })
+
+@app.route('/api/quiz/answer', methods=['POST'])
+def quiz_answer():
+    player = session.get('player')
+    if not player:
+        return jsonify({'error': 'No session'}), 400
+
+    data = request.json
+    ans = data.get('answer')
+    q = session.get('current_question')
+
+    if not q:
+        return jsonify({'error': 'No active question'}), 400
+
+    correct = ans == q['answer']
+    domain = q['domain']
+
+    if domain in player['domain_scores']:
+        player['domain_scores'][domain]['attempted'] += 1
+        if correct:
+            player['domain_scores'][domain]['correct'] += 1
+            player['score'] += 50
+            player['cert_progress'] = min(100, player.get('cert_progress', 0) + 2)
+
+    session['player'] = player
+
+    return jsonify({
+        'correct': correct,
+        'correct_answer': q['answer'],
+        'correct_text': q['options'][q['answer']],
+        'explanation': q['explanation'],
+        'domain': domain,
+        'player': player
+    })
 
 @app.route('/api/ai_hint', methods=['POST'])
 def ai_hint():
@@ -340,15 +354,13 @@ def ai_hint():
         payload = json_lib.dumps({
             "model": model,
             "max_tokens": 150,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": f"""You are a cybersecurity mentor in a training game. 
-{context} 
-Give a practical 2 sentence hint that references real-world security practice. 
+            "messages": [{
+                "role": "user",
+                "content": f"""You are a cybersecurity mentor in a Security+ exam training game.
+{context}
+Give a practical 2 sentence hint that references real-world security practice and connects to CompTIA Security+ SY0-701 exam objectives.
 Do not reveal the answer directly. Be specific, not generic."""
-                }
-            ]
+            }]
         }).encode()
 
         req = urllib.request.Request(
@@ -363,12 +375,10 @@ Do not reveal the answer directly. Be specific, not generic."""
 
         with urllib.request.urlopen(req) as response:
             result = json_lib.loads(response.read())
-            hint = result['content'][0]['text']
-            return jsonify({'hint': hint})
+            return jsonify({'hint': result['content'][0]['text']})
 
     except Exception as e:
         return jsonify({'hint': f'Could not reach Claude: {str(e)}'})
-
 
 @app.route('/api/ai_feedback', methods=['POST'])
 def ai_feedback():
@@ -382,9 +392,9 @@ def ai_feedback():
         return jsonify({'feedback': ''})
 
     outcome = "correctly identified" if correct else "incorrectly assessed"
-    prompt = f"""You are a cybersecurity trainer. A player {outcome} this scenario: {context}
-Give exactly one sentence of feedback that connects this to a real-world attack or defence technique.
-Be specific and technical, not generic. Reference actual tools, frameworks or incidents where relevant."""
+    prompt = f"""You are a Security+ exam trainer. A player {outcome} this scenario: {context}
+Give exactly one sentence of feedback connecting this to a real-world attack technique or CompTIA Security+ SY0-701 exam objective.
+Be specific and technical. Reference actual frameworks, tools or CVEs where relevant."""
 
     try:
         import urllib.request
@@ -412,92 +422,6 @@ Be specific and technical, not generic. Reference actual tools, frameworks or in
 
     except Exception as e:
         return jsonify({'feedback': ''})
-    
-@app.route('/api/ai_scenario', methods=['POST'])
-def ai_scenario():
-    data = request.json
-    key = data.get('api_key', '')
-    level_type = data.get('type', '')
 
-    if not key:
-        return jsonify({'error': 'No API key'})
-
-    prompts = {
-        'password': """Generate a cybersecurity training scenario about password strength. 
-Return ONLY valid JSON in this exact format, nothing else:
-{
-  "passwords": [
-    {"password": "example1", "weak": true},
-    {"password": "example2", "weak": false},
-    {"password": "example3", "weak": true},
-    {"password": "example4", "weak": false},
-    {"password": "example5", "weak": true},
-    {"password": "example6", "weak": false}
-  ]
-}
-Mix weak passwords (short, common words, simple patterns) with strong ones (long, random, mixed characters). Make them realistic.""",
-
-        'port': """Generate a cybersecurity training scenario about a suspicious network port.
-Return ONLY valid JSON in this exact format, nothing else:
-{
-  "port": 8080,
-  "service": "HTTP-Alt",
-  "threat": true,
-  "reason": "Explanation of why this is or isn't a threat in one sentence."
-}
-Use realistic port numbers and services. Vary between genuine threats and false positives.""",
-
-        'logs': """Generate a cybersecurity training scenario with 3 server log entries, one showing suspicious activity.
-Return ONLY valid JSON in this exact format, nothing else:
-{
-  "logs": [
-    "timestamp  event.type  user@corp.com  IP: x.x.x.x  STATUS  optional_detail",
-    "timestamp  event.type  user@corp.com  IP: x.x.x.x  STATUS  optional_detail",
-    "timestamp  event.type  user@corp.com  IP: x.x.x.x  STATUS  optional_detail"
-  ],
-  "answer": 1,
-  "reason": "Explanation of why this log entry is suspicious in one sentence."
-}
-Use realistic timestamps and IPs. The answer field is the zero-based index of the suspicious log."""
-    }
-
-    prompt = prompts.get(level_type)
-    if not prompt:
-        return jsonify({'error': 'Unknown level type'})
-
-    try:
-        import urllib.request
-        import json as json_lib
-
-        payload = json_lib.dumps({
-            "model": "claude-sonnet-4-6",
-            "max_tokens": 500,
-            "messages": [{"role": "user", "content": prompt}]
-        }).encode()
-
-        req = urllib.request.Request(
-            'https://api.anthropic.com/v1/messages',
-            data=payload,
-            headers={
-                'Content-Type': 'application/json',
-                'x-api-key': key,
-                'anthropic-version': '2023-06-01'
-            }
-        )
-
-        with urllib.request.urlopen(req) as response:
-            result = json_lib.loads(response.read())
-            text = result['content'][0]['text'].strip()
-            # strip markdown code fences if Claude wraps it
-            if text.startswith('```'):
-                text = text.split('```')[1]
-                if text.startswith('json'):
-                    text = text[4:]
-            scenario = json_lib.loads(text.strip())
-            return jsonify({'scenario': scenario})
-
-    except Exception as e:
-        return jsonify({'error': str(e)})
-    
 if __name__ == '__main__':
     app.run(debug=True)

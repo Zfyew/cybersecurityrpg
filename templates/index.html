@@ -3,132 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cyber Security RPG</title>
+    <title>NIGHT CITY SEC // CYBER SECURITY RPG</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <div id="scanlines"></div>
+    <div id="noise"></div>
 
     <!-- intro screen -->
     <div id="intro-screen" class="screen active">
-        <div class="terminal-box">
-            <div class="terminal-header">
-                <span class="dot red"></span>
-                <span class="dot yellow"></span>
-                <span class="dot green"></span>
-                <span class="terminal-title">CYBER SECURITY RPG v1.0</span>
+        <div class="cp-box">
+            <div class="cp-header">
+                <div class="cp-header-left">
+                    <span class="cp-corner">◈</span>
+                    <span class="cp-title">NIGHT CITY SEC // THREAT RESPONSE UNIT</span>
+                </div>
+                <div class="cp-header-right">
+                    <span class="cp-status blink">● LIVE</span>
+                </div>
             </div>
-            <div id="intro-text" class="terminal-body">
-                <p class="type-line">Initialising secure terminal...</p>
-                <p class="type-line">Loading threat database...</p>
-                <p class="type-line">All systems ready.</p>
-                <p class="type-line">&nbsp;</p>
-                <p class="type-line">You are a security analyst.</p>
-                <p class="type-line">Systems are under attack.</p>
-                <p class="type-line">Your job: investigate, contain, fight back.</p>
-                <p class="type-line">&nbsp;</p>
+
+            <div class="cp-body">
+                <div class="cp-ascii">
+██████╗██████╗ ██████╗
+██╔════╝██╔══██╗██╔══██╗
+██║     ██████╔╝██████╔╝
+██║     ██╔══██╗██╔═══╝
+╚██████╗██║  ██║██║
+ ╚═════╝╚═╝  ╚═╝╚═╝</div>
+                <div class="cp-subtitle">CYBER RESPONSE PROTOCOL // v2.0.77</div>
+
+                <div id="intro-lines">
+                    <p class="boot-line" style="--d:0.2s">[ SYS ] Initialising secure uplink...</p>
+                    <p class="boot-line" style="--d:0.6s">[ SYS ] Loading threat intelligence database...</p>
+                    <p class="boot-line" style="--d:1.0s">[ SYS ] Calibrating neural interface...</p>
+                    <p class="boot-line" style="--d:1.4s">[ OK  ] All systems nominal.</p>
+                    <p class="boot-line" style="--d:1.8s">&nbsp;</p>
+                    <p class="boot-line" style="--d:2.2s">[ INTEL ] Corporate networks are under siege.</p>
+                    <p class="boot-line" style="--d:2.6s">[ INTEL ] Threat actors are inside the wire.</p>
+                    <p class="boot-line" style="--d:3.0s">[ MISSION ] Investigate. Contain. Neutralise.</p>
+                    <p class="boot-line" style="--d:3.4s">&nbsp;</p>
+                </div>
+
+                <div class="cp-input-section">
+                    <div class="cp-input-row">
+                        <span class="cp-prompt">AGENT_ID://</span>
+                        <input type="text" id="player-name" placeholder="enter designation" autofocus />
+                        <button id="start-btn" onclick="startGame()">JACK IN ▶</button>
+                    </div>
+
+                    <div class="cp-mode-section">
+                        <div class="cp-mode-label">// OPERATION MODE</div>
+                        <div class="cp-mode-grid">
+                            <div class="cp-mode-card active" id="mode-base" onclick="selectMode('base')">
+                                <div class="cp-mode-icon">◈</div>
+                                <div class="cp-mode-name">STANDARD OPS</div>
+                                <div class="cp-mode-desc">Built-in threat scenarios. No uplink required.</div>
+                                <div class="cp-mode-tag">NO API KEY NEEDED</div>
+                            </div>
+                            <div class="cp-mode-card" id="mode-ai" onclick="selectMode('ai')">
+                                <div class="cp-mode-icon">⚡</div>
+                                <div class="cp-mode-name">NEURAL NET MODE</div>
+                                <div class="cp-mode-desc">Claude AI generates live threat scenarios every run.</div>
+                                <div class="cp-mode-tag">REQUIRES ANTHROPIC API KEY</div>
+                            </div>
+                        </div>
+
+                        <div id="ai-fields" style="display:none;">
+                            <div class="cp-api-row">
+                                <span class="cp-prompt">API_KEY://</span>
+                                <input type="password" id="api-key" placeholder="sk-ant-..." />
+                            </div>
+                            <div class="cp-api-row">
+                                <span class="cp-prompt">MODEL://</span>
+                                <select id="model-select">
+                                    <option value="claude-sonnet-4-6">claude-sonnet-4-6 — recommended</option>
+                                    <option value="claude-opus-4-6">claude-opus-4-6 — maximum intel quality</option>
+                                    <option value="claude-haiku-4-5-20251001">claude-haiku-4-5-20251001 — fastest response</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="input-row">
-        <label class="prompt">Enter agent name: </label>
-        <input type="text" id="player-name" placeholder="your name" autofocus />
-        <button id="start-btn" onclick="startGame()">CONNECT</button>
-            </div>
-            <div class="mode-select-row">
-        <p class="mode-label">// SELECT MODE</p>
-        <div class="mode-options">
-            <div class="mode-option active" id="mode-base" onclick="selectMode('base')">
-                <div class="mode-title">BASE MODE</div>
-                <div class="mode-desc">Play with built-in scenarios. No API key needed.</div>
-            </div>
-            <div class="mode-option" id="mode-ai" onclick="selectMode('ai')">
-                <div class="mode-title">AI MODE ⚡</div>
-                <div class="mode-desc">Claude generates fresh scenarios every run. Requires an Anthropic API key.</div>
-            </div>
-        </div>
-        <div id="ai-fields" style="display:none;">
-            <div class="api-row">
-                <label class="prompt-optional">Anthropic API key: </label>
-                <input type="password" id="api-key" placeholder="sk-ant-..." />
-            </div>
-            <div class="api-row">
-                <label class="prompt-optional">Model: </label>
-                <select id="model-select">
-                    <option value="claude-sonnet-4-6">claude-sonnet-4-6 — recommended</option>
-                    <option value="claude-opus-4-6">claude-opus-4-6 — best scenarios, slower</option>
-                    <option value="claude-haiku-4-5-20251001">claude-haiku-4-5-20251001 — fastest, cheapest</option>
-                </select>
+
+            <div class="cp-footer">
+                <span>NIGHT CITY SEC DIVISION // CLASSIFIED</span>
+                <span>UNAUTHORIZED ACCESS WILL BE PROSECUTED</span>
             </div>
         </div>
     </div>
 
     <!-- main game screen -->
     <div id="game-screen" class="screen">
-        <div class="hud">
-            <div class="hud-item">
-                <span class="hud-label">AGENT</span>
-                <span id="hud-name">—</span>
-            </div>
-            <div class="hud-item">
-                <span class="hud-label">HEALTH</span>
-                <div class="health-bar-wrap">
-                    <div id="health-bar" class="health-bar"></div>
+
+        <!-- HUD -->
+        <div class="cp-hud">
+            <div class="cp-hud-left">
+                <div class="cp-hud-block">
+                    <div class="cp-hud-label">AGENT</div>
+                    <div class="cp-hud-value" id="hud-name">—</div>
                 </div>
-                <span id="hud-health">100</span>
+                <div class="cp-hud-block">
+                    <div class="cp-hud-label">INTEGRITY</div>
+                    <div class="cp-health-wrap">
+                        <div id="health-bar" class="cp-health-bar"></div>
+                    </div>
+                    <div class="cp-hud-value" id="hud-health">100</div>
+                </div>
             </div>
-            <div class="hud-item">
-                <span class="hud-label">SCORE</span>
-                <span id="hud-score">0</span>
+            <div class="cp-hud-center">
+                <div class="cp-hud-title">NIGHT CITY SEC</div>
+                <div class="cp-hud-subtitle">THREAT RESPONSE UNIT</div>
             </div>
-            <div class="hud-item">
-                <span class="hud-label">TOOLS</span>
-                <span id="hud-tools">None</span>
+            <div class="cp-hud-right">
+                <div class="cp-hud-block">
+                    <div class="cp-hud-label">SCORE</div>
+                    <div class="cp-hud-value highlight" id="hud-score">0</div>
+                </div>
+                <div class="cp-hud-block">
+                    <div class="cp-hud-label">TOOLS</div>
+                    <div class="cp-hud-value small" id="hud-tools">NONE</div>
+                </div>
             </div>
         </div>
 
         <!-- level select -->
-        <div id="level-select" class="panel active">
-            <h2 class="panel-title">// SELECT MISSION</h2>
-            <div class="level-grid">
-                <div class="level-card" id="level-1-card" onclick="loadLevel(1)">
-                    <div class="level-num">01</div>
-                    <div class="level-name">Password Cracking</div>
-                    <div class="level-status" id="level-1-status">AVAILABLE</div>
+        <div id="level-select" class="cp-panel active">
+            <div class="cp-panel-header">
+                <span class="cp-corner">◈</span>
+                <h2 class="cp-panel-title">SELECT MISSION</h2>
+                <div class="cp-panel-line"></div>
+            </div>
+            <div class="cp-level-grid">
+                <div class="cp-level-card" id="level-1-card" onclick="loadLevel(1)">
+                    <div class="cp-level-num">01</div>
+                    <div class="cp-level-content">
+                        <div class="cp-level-name">PASSWORD CRACKING</div>
+                        <div class="cp-level-domain">Security+ Domain: Threats & Vulnerabilities</div>
+                        <div class="cp-level-desc">Identify weak credentials before the attacker does.</div>
+                    </div>
+                    <div class="cp-level-status" id="level-1-status">AVAILABLE ▶</div>
                 </div>
-                <div class="level-card locked" id="level-2-card">
-                    <div class="level-num">02</div>
-                    <div class="level-name">Port Scanning</div>
-                    <div class="level-status" id="level-2-status">LOCKED</div>
+                <div class="cp-level-card locked" id="level-2-card">
+                    <div class="cp-level-num">02</div>
+                    <div class="cp-level-content">
+                        <div class="cp-level-name">PORT SCANNING</div>
+                        <div class="cp-level-domain">Security+ Domain: Network Security</div>
+                        <div class="cp-level-desc">Analyse exposed services on a hostile device.</div>
+                    </div>
+                    <div class="cp-level-status" id="level-2-status">◈ LOCKED</div>
                 </div>
-                <div class="level-card locked" id="level-3-card">
-                    <div class="level-num">03</div>
-                    <div class="level-name">Breach Investigation</div>
-                    <div class="level-status" id="level-3-status">LOCKED</div>
+                <div class="cp-level-card locked" id="level-3-card">
+                    <div class="cp-level-num">03</div>
+                    <div class="cp-level-content">
+                        <div class="cp-level-name">BREACH INVESTIGATION</div>
+                        <div class="cp-level-domain">Security+ Domain: Incident Response</div>
+                        <div class="cp-level-desc">Hunt the attacker through live log data.</div>
+                    </div>
+                    <div class="cp-level-status" id="level-3-status">◈ LOCKED</div>
                 </div>
+            </div>
+
+            <!-- Security+ progress bar -->
+            <div class="cp-cert-section">
+                <div class="cp-cert-label">SECURITY+ EXAM READINESS</div>
+                <div class="cp-cert-bar-wrap">
+                    <div id="cert-bar" class="cp-cert-bar" style="width:0%"></div>
+                </div>
+                <div class="cp-cert-domains" id="domain-tracker"></div>
             </div>
         </div>
 
         <!-- level panel -->
-        <div id="level-panel" class="panel">
-            <button class="back-btn" onclick="showLevelSelect()">← BACK</button>
-            <h2 id="level-title" class="panel-title"></h2>
-            <p id="level-desc" class="level-desc"></p>
+        <div id="level-panel" class="cp-panel">
+            <div class="cp-panel-header">
+                <button class="cp-back-btn" onclick="showLevelSelect()">◄ ABORT MISSION</button>
+                <h2 id="level-title" class="cp-panel-title"></h2>
+                <div class="cp-panel-line"></div>
+            </div>
+            <p id="level-desc" class="cp-level-desc-text"></p>
             <div id="level-content"></div>
-            <div id="feedback" class="feedback hidden"></div>
+            <div id="feedback" class="cp-feedback hidden"></div>
+
+            <!-- domain card shown after completing a level -->
+            <div id="domain-card" class="cp-domain-card hidden">
+                <div class="cp-domain-header">
+                    <span class="cp-corner">◈</span>
+                    <span id="domain-card-title">SECURITY+ INTEL UNLOCKED</span>
+                </div>
+                <div class="cp-domain-body">
+                    <div class="cp-domain-field">
+                        <span class="cp-domain-label">DOMAIN</span>
+                        <span id="domain-name" class="cp-domain-value"></span>
+                    </div>
+                    <div class="cp-domain-field">
+                        <span class="cp-domain-label">OBJECTIVE</span>
+                        <span id="domain-objective" class="cp-domain-value"></span>
+                    </div>
+                    <div class="cp-domain-field">
+                        <span class="cp-domain-label">KEY CONCEPT</span>
+                        <span id="domain-concept" class="cp-domain-value"></span>
+                    </div>
+                    <div class="cp-domain-field">
+                        <span class="cp-domain-label">EXAM TIP</span>
+                        <span id="domain-tip" class="cp-domain-value highlight"></span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- game over screen -->
     <div id="gameover-screen" class="screen">
-        <div class="terminal-box">
-            <div class="terminal-header">
-                <span class="dot red"></span>
-                <span class="dot yellow"></span>
-                <span class="dot green"></span>
-                <span class="terminal-title">SESSION TERMINATED</span>
+        <div class="cp-box">
+            <div class="cp-header">
+                <div class="cp-header-left">
+                    <span class="cp-corner">◈</span>
+                    <span class="cp-title" id="gameover-title">SESSION TERMINATED</span>
+                </div>
             </div>
-            <div class="terminal-body">
-                <p id="gameover-msg"></p>
-                <button onclick="location.reload()">RESTART</button>
+            <div class="cp-body">
+                <div id="gameover-msg"></div>
+                <button onclick="location.reload()" style="margin-top:24px;">↺ NEW SESSION</button>
             </div>
         </div>
     </div>
