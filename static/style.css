@@ -700,3 +700,144 @@ select option { background: var(--darker); color: var(--text); }
 }
 
 .cp-confirm-btn:hover { background: var(--yellow); color: var(--darker); }
+
+/* transitions */
+.cp-panel {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.cp-panel.fade-out {
+    opacity: 0;
+    transform: translateX(-20px);
+    pointer-events: none;
+}
+
+.cp-panel.fade-in {
+    animation: panelIn 0.4s ease forwards;
+}
+
+@keyframes panelIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.cp-level-card {
+    transition: all 0.2s ease, opacity 0.3s ease;
+}
+
+.cp-level-card.pulse {
+    animation: cardPulse 0.4s ease;
+}
+
+@keyframes cardPulse {
+    0% { box-shadow: 0 0 0 rgba(245,197,24,0); }
+    50% { box-shadow: 0 0 30px rgba(245,197,24,0.4); }
+    100% { box-shadow: 0 0 0 rgba(245,197,24,0); }
+}
+
+/* loading bar that runs across the top when a level loads */
+.cp-loading-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 2px;
+    width: 0%;
+    background: linear-gradient(90deg, var(--yellow), var(--cyan));
+    z-index: 10000;
+    transition: width 0.4s ease;
+}
+
+.cp-loading-bar.done {
+    width: 100%;
+    opacity: 0;
+    transition: width 0.3s ease, opacity 0.3s ease 0.3s;
+}
+
+/* glitch effect on level title */
+.cp-panel-title.glitch {
+    animation: glitch 0.4s steps(2) forwards;
+}
+
+@keyframes glitch {
+    0% { text-shadow: 2px 0 #ff003c, -2px 0 #00d4ff; transform: skewX(0deg); }
+    20% { text-shadow: -2px 0 #ff003c, 2px 0 #00d4ff; transform: skewX(-3deg); }
+    40% { text-shadow: 2px 0 #ff003c, -2px 0 #00d4ff; transform: skewX(3deg); }
+    60% { text-shadow: -2px 0 #ff003c, 2px 0 #00d4ff; transform: skewX(0deg); }
+    80% { text-shadow: 2px 0 #ff003c, -2px 0 #00d4ff; transform: skewX(-1deg); }
+    100% { text-shadow: none; transform: skewX(0deg); }
+}
+
+/* correct answer flash */
+.cp-feedback.flash-correct {
+    animation: flashCorrect 0.5s ease;
+}
+
+@keyframes flashCorrect {
+    0% { background: rgba(0,255,136,0); }
+    30% { background: rgba(0,255,136,0.15); }
+    100% { background: rgba(0,255,136,0.05); }
+}
+
+/* wrong answer shake */
+.cp-feedback.shake {
+    animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+}
+
+/* HUD value pop when score changes */
+.cp-hud-value.pop {
+    animation: valuePop 0.3s ease;
+}
+
+@keyframes valuePop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); color: #f5c518; }
+    100% { transform: scale(1); }
+}
+
+/* domain card slide in */
+.cp-domain-card {
+    animation: none;
+}
+
+.cp-domain-card.slide-in {
+    animation: slideIn 0.4s ease forwards;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* screen transition overlay */
+.cp-screen-flash {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: var(--yellow);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9997;
+}
+
+.cp-screen-flash.flash {
+    animation: screenFlash 0.4s ease forwards;
+}
+
+@keyframes screenFlash {
+    0% { opacity: 0; }
+    20% { opacity: 0.08; }
+    100% { opacity: 0; }
+}

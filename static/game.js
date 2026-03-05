@@ -17,6 +17,71 @@ const BASE_HINTS = {
     vulnerability: "Distinguish between fixing the root cause and implementing a compensating control. Patching is a fix, a WAF is a control."
 }
 
+// transition helpers
+function showLoadingBar() {
+    const bar = document.getElementById('loading-bar');
+    bar.style.width = '0%';
+    bar.classList.remove('done');
+    bar.style.opacity = '1';
+    setTimeout(() => bar.style.width = '70%', 50);
+}
+
+function completeLoadingBar() {
+    const bar = document.getElementById('loading-bar');
+    bar.classList.add('done');
+    setTimeout(() => {
+        bar.style.width = '0%';
+        bar.classList.remove('done');
+    }, 700);
+}
+
+function screenFlash() {
+    const flash = document.getElementById('screen-flash');
+    flash.classList.remove('flash');
+    void flash.offsetWidth;
+    flash.classList.add('flash');
+}
+
+function glitchTitle(el) {
+    if (!el) return;
+    el.classList.remove('glitch');
+    void el.offsetWidth;
+    el.classList.add('glitch');
+    setTimeout(() => el.classList.remove('glitch'), 400);
+}
+
+function popValue(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+    setTimeout(() => el.classList.remove('pop'), 300);
+}
+
+function transitionPanels(fromId, toId, callback) {
+    const from = document.getElementById(fromId);
+    const to = document.getElementById(toId);
+
+    if (from) {
+        from.classList.add('fade-out');
+        setTimeout(() => {
+            from.classList.remove('active', 'fade-out');
+            if (callback) callback();
+            if (to) {
+                to.classList.add('active', 'fade-in');
+                setTimeout(() => to.classList.remove('fade-in'), 400);
+            }
+        }, 300);
+    } else {
+        if (to) {
+            to.classList.add('active', 'fade-in');
+            setTimeout(() => to.classList.remove('fade-in'), 400);
+        }
+        if (callback) callback();
+    }
+}
+
 function animateIntro() {
     const lines = document.querySelectorAll('.boot-line');
     lines.forEach((line, i) => {
@@ -170,16 +235,37 @@ async function loadLevel(num) {
     selectedLog = null;
     levelAnswered = false;
 
+    showLoadingBar();
+    screenFlash();
+
+    // pulse the selected card
+    const card = document.getElementById(`level-${num}-card`);
+    if (card) {
+        card.classList.add('pulse');
+        setTimeout(() => card.classList.remove('pulse'), 400);
+    }
+
     const params = aiMode
         ? `?ai_mode=true&api_key=${encodeURIComponent(apiKey)}&model=${encodeURIComponent(selectedModel)}`
         : '';
     const res = await fetch(`/api/level/${num}${params}`);
-    if (!res.ok) return;
+    if (!res.ok) { completeLoadingBar(); return; }
     const data = await res.json();
+
+    completeLoadingBar();
+
+    transitionPanels('level-select', null, () => {
+        document.getElementById('level-panel').classList.add('active', 'fade-in');
+        setTimeout(() => document.getElementById('level-panel').classList.remove('fade-in'), 400);
+    });
 
     document.getElementById('level-select').classList.remove('active');
     document.getElementById('level-panel').classList.add('active');
     document.getElementById('level-title').textContent = data.title.toUpperCase();
+
+    // glitch the title in
+    setTimeout(() => glitchTitle(document.getElementById('level-title')), 100);
+
     document.getElementById('level-desc').textContent = data.description;
     document.getElementById('feedback').classList.add('hidden');
     document.getElementById('feedback').className = 'cp-feedback hidden';
@@ -498,8 +584,11 @@ async function submitAnswer(answer) {
     if (data.correct) {
         levelAnswered = true;
         lockAllOptions();
+        popValue('hud-score');
 
         feedback.textContent = `◈ CORRECT. ${data.reason} +${data.points} pts`;
+        feedback.classList.add('flash-correct');
+        setTimeout(() => feedback.classList.remove('flash-correct'), 500);
 
         if (data.domain_info) showDomainCard(data.domain_info);
 
@@ -530,6 +619,9 @@ async function submitAnswer(answer) {
     } else {
         feedback.classList.add('wrong');
         feedback.textContent = `✗ WRONG CALL. ${data.reason} -25 INTEGRITY.`;
+        feedback.classList.add('shake');
+        setTimeout(() => feedback.classList.remove('shake'), 400);
+        popValue('hud-health');
 
         if (aiMode) {
             try {
@@ -552,7 +644,9 @@ async function submitAnswer(answer) {
 
 function showDomainCard(domainInfo) {
     const card = document.getElementById('domain-card');
-    card.classList.remove('hidden');
+    card.classList.remove('hidden', 'slide-in');
+    void card.offsetWidth;
+    card.classList.add('slide-in');
     document.getElementById('domain-name').textContent = domainInfo.domain || '';
     document.getElementById('domain-objective').textContent = domainInfo.objective || '';
     document.getElementById('domain-concept').textContent = domainInfo.key_concept || '';
@@ -562,8 +656,10 @@ function showDomainCard(domainInfo) {
 }
 
 function gameOver(won) {
-    document.getElementById('game-screen').classList.remove('active');
-    document.getElementById('gameover-screen').classList.add('active');
+    screenFlash();
+    setTimeout(() => {
+        document.getElementById('game-screen').classList.remove('active');
+        document.getElementById('gameover-screen').classList.add('active');
 
     const title = document.getElementById('gameover-title');
     const msg = document.getElementById('gameover-msg');
@@ -623,7 +719,7 @@ function gameOver(won) {
     restartBtn.textContent = '↺ NEW SESSION';
     restartBtn.onclick = () => location.reload();
     msg.appendChild(restartBtn);
-}
+}, 200);
 
 function getRating(score, health) {
     const total = score + health;
@@ -631,4 +727,5 @@ function getRating(score, health) {
     if (total >= 400) return 'A-TIER // SENIOR ANALYST';
     if (total >= 300) return 'B-TIER // FIELD OPERATIVE';
     return 'C-TIER // ROOKIE AGENT';
+    
 }
