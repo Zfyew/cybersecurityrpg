@@ -493,6 +493,252 @@ SCENARIO_META = {
     }
 }
 
+# ── mini-game scenarios ───────────────────────────────────────────────────────
+
+TERMINAL_SCENARIOS = [
+    {
+        'objective': 'Gain access to the target server at 10.0.0.47',
+        'target': '10.0.0.47',
+        'sequence': ['nmap', 'ssh', 'exploit', 'sudo'],
+        'prompts': {
+            'nmap': {
+                'output': [
+                    '> Starting Nmap scan on 10.0.0.47...',
+                    '> PORT     STATE  SERVICE',
+                    '> 22/tcp   open   ssh',
+                    '> 80/tcp   open   http',
+                    '> 3306/tcp open   mysql',
+                    '> Scan complete. SSH port open.'
+                ],
+                'hint': 'SSH is open. Try connecting.'
+            },
+            'ssh': {
+                'output': [
+                    '> Attempting SSH connection to 10.0.0.47...',
+                    '> Connected as guest@10.0.0.47',
+                    '> Limited shell access granted.',
+                    '> You need higher privileges.'
+                ],
+                'hint': 'You are in but need root. Look for an exploit.'
+            },
+            'exploit': {
+                'output': [
+                    '> Searching exploit database...',
+                    '> CVE-2023-4911 found — glibc privilege escalation',
+                    '> Exploit loaded. Ready to execute.',
+                    '> Run sudo to escalate privileges.'
+                ],
+                'hint': 'Exploit loaded. Escalate now.'
+            },
+            'sudo': {
+                'output': [
+                    '> Executing privilege escalation...',
+                    '> root@10.0.0.47:~# ',
+                    '> ROOT ACCESS GRANTED',
+                    '> Target compromised.'
+                ],
+                'hint': ''
+            }
+        },
+        'wrong_responses': [
+            'Command not recognised. Try a different approach.',
+            'Access denied. That sequence is incorrect.',
+            'Invalid command for current context.',
+            'Firewall blocked that attempt. Try again.'
+        ],
+        'domain': 'Operations & Incident Response',
+        'reason': 'This sequence mirrors real penetration testing methodology — reconnaissance with nmap, initial access via SSH, exploitation of a known CVE, then privilege escalation to root.'
+    },
+    {
+        'objective': 'Extract credentials from the database at 192.168.1.100',
+        'target': '192.168.1.100',
+        'sequence': ['nmap', 'sqlmap', 'dump', 'exfil'],
+        'prompts': {
+            'nmap': {
+                'output': [
+                    '> Scanning 192.168.1.100...',
+                    '> PORT     STATE  SERVICE',
+                    '> 3306/tcp open   mysql',
+                    '> 80/tcp   open   http',
+                    '> Database port exposed. Possible SQL injection vector.'
+                ],
+                'hint': 'A database is exposed. Try SQL injection tooling.'
+            },
+            'sqlmap': {
+                'output': [
+                    '> Running sqlmap against 192.168.1.100:80...',
+                    '> Injection point found in login form',
+                    '> Database: corp_users',
+                    '> Tables: credentials, sessions, audit_log',
+                    '> Ready to dump credentials table.'
+                ],
+                'hint': 'Injection confirmed. Dump the data.'
+            },
+            'dump': {
+                'output': [
+                    '> Dumping credentials table...',
+                    '> admin:5f4dcc3b5aa765d61d8327deb882cf99',
+                    '> user1:e10adc3949ba59abbe56e057f20f883e',
+                    '> 47 records extracted. Hashes are MD5.',
+                    '> Ready to exfiltrate.'
+                ],
+                'hint': 'Data dumped. Exfiltrate to complete the mission.'
+            },
+            'exfil': {
+                'output': [
+                    '> Opening encrypted tunnel...',
+                    '> Transferring 47 credential records...',
+                    '> Transfer complete.',
+                    '> MISSION COMPLETE — credentials extracted.'
+                ],
+                'hint': ''
+            }
+        },
+        'wrong_responses': [
+            'Command not found in current context.',
+            'That operation failed. Wrong approach.',
+            'Access denied. Reconsider your method.',
+            'Invalid sequence. The target is hardened against that.'
+        ],
+        'domain': 'Operations & Incident Response',
+        'reason': 'This mirrors a real SQL injection attack chain — reconnaissance, injection testing with sqlmap, data extraction, and exfiltration over an encrypted channel.'
+    }
+]
+
+PACKET_TRACER_SCENARIOS = [
+    {
+        'objective': 'Route the packet from workstation to the secure database without passing through the untrusted DMZ node',
+        'nodes': [
+            {'id': 'ws', 'label': 'WORKSTATION', 'x': 0, 'y': 2, 'type': 'source'},
+            {'id': 'fw1', 'label': 'FIREWALL', 'x': 1, 'y': 2, 'type': 'safe'},
+            {'id': 'dmz', 'label': 'DMZ NODE', 'x': 2, 'y': 1, 'type': 'danger'},
+            {'id': 'sw1', 'label': 'CORE SWITCH', 'x': 2, 'y': 2, 'type': 'safe'},
+            {'id': 'ids', 'label': 'IDS SENSOR', 'x': 2, 'y': 3, 'type': 'safe'},
+            {'id': 'db', 'label': 'DATABASE', 'x': 3, 'y': 2, 'type': 'target'}
+        ],
+        'connections': [
+            ['ws', 'fw1'],
+            ['fw1', 'dmz'],
+            ['fw1', 'sw1'],
+            ['fw1', 'ids'],
+            ['dmz', 'db'],
+            ['sw1', 'db'],
+            ['ids', 'db']
+        ],
+        'correct_path': ['ws', 'fw1', 'sw1', 'db'],
+        'reason': 'Traffic should route through the firewall and core switch — never through the DMZ which is an untrusted zone for public-facing services, not internal database access.'
+    },
+    {
+        'objective': 'Route the packet from the remote user to the internal server via the VPN gateway — avoid the unencrypted proxy',
+        'nodes': [
+            {'id': 'remote', 'label': 'REMOTE USER', 'x': 0, 'y': 1, 'type': 'source'},
+            {'id': 'internet', 'label': 'INTERNET', 'x': 1, 'y': 1, 'type': 'safe'},
+            {'id': 'proxy', 'label': 'HTTP PROXY', 'x': 2, 'y': 0, 'type': 'danger'},
+            {'id': 'vpn', 'label': 'VPN GATEWAY', 'x': 2, 'y': 2, 'type': 'safe'},
+            {'id': 'fw', 'label': 'FIREWALL', 'x': 3, 'y': 1, 'type': 'safe'},
+            {'id': 'srv', 'label': 'INTERNAL SERVER', 'x': 4, 'y': 1, 'type': 'target'}
+        ],
+        'connections': [
+            ['remote', 'internet'],
+            ['internet', 'proxy'],
+            ['internet', 'vpn'],
+            ['proxy', 'fw'],
+            ['vpn', 'fw'],
+            ['fw', 'srv']
+        ],
+        'correct_path': ['remote', 'internet', 'vpn', 'fw', 'srv'],
+        'reason': 'Remote users should always connect via VPN to encrypt traffic end-to-end. Routing through an unencrypted HTTP proxy exposes credentials and session data to interception.'
+    }
+]
+
+BRUTE_FORCE_SCENARIOS = [
+    {
+        'objective': 'Three password hashes have been intercepted. Identify which algorithm is weakest and will crack first — then intercept it before the attacker does.',
+        'hashes': [
+            {
+                'algorithm': 'MD5',
+                'hash': '5f4dcc3b5aa765d61d8327deb882cf99',
+                'speed': 'VERY FAST',
+                'crack_time': 3,
+                'weak': True,
+                'info': 'MD5 is broken. GPUs can compute 10 billion MD5 hashes per second.'
+            },
+            {
+                'algorithm': 'bcrypt',
+                'hash': '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK8i',
+                'speed': 'VERY SLOW',
+                'crack_time': 15,
+                'weak': False,
+                'info': 'bcrypt is designed to be slow. Cost factor 12 means ~250ms per hash.'
+            },
+            {
+                'algorithm': 'SHA-1',
+                'hash': 'aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d',
+                'speed': 'FAST',
+                'crack_time': 7,
+                'weak': False,
+                'info': 'SHA-1 is deprecated but still much slower than MD5 for password cracking.'
+            }
+        ],
+        'answer': 0,
+        'reason': 'MD5 is critically weak for password storage — it has no salt and can be computed at billions of hashes per second using modern GPUs. bcrypt is the correct choice for password hashing.'
+    },
+    {
+        'objective': 'An attacker has obtained a password database. Three hashing algorithms are in use. Identify which account will be compromised first.',
+        'hashes': [
+            {
+                'algorithm': 'bcrypt',
+                'hash': '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+                'speed': 'SLOW',
+                'crack_time': 12,
+                'weak': False,
+                'info': 'bcrypt with cost factor 10. Computationally expensive by design.'
+            },
+            {
+                'algorithm': 'SHA-256',
+                'hash': '6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b',
+                'speed': 'MODERATE',
+                'crack_time': 8,
+                'weak': False,
+                'info': 'SHA-256 is a fast hash — not designed for passwords. Better than MD5 but still vulnerable.'
+            },
+            {
+                'algorithm': 'MD5',
+                'hash': 'cfcd208495d565ef66e7dff9f98764da',
+                'speed': 'VERY FAST',
+                'crack_time': 2,
+                'weak': True,
+                'info': 'MD5 — completely broken for password storage. No salt, trivially fast to crack.'
+            }
+        ],
+        'answer': 2,
+        'reason': 'MD5 with no salt is trivially cracked in seconds. This directly maps to Security+ objective 3.2 — understanding why password hashing algorithms must be slow and salted.'
+    }
+]
+
+MINIGAME_TYPES = ['terminal', 'packet_tracer', 'brute_force']
+
+DOMAIN_MAP_MINIGAMES = {
+    'terminal': {
+        'domain': 'Operations & Incident Response',
+        'objective': '4.1 — Given a scenario, use the appropriate tool to assess organisational security',
+        'key_concept': 'Penetration testing follows a methodology: reconnaissance, scanning, exploitation, post-exploitation. Tools like nmap, sqlmap and metasploit are used by both attackers and defenders.',
+        'exam_tip': 'Know the phases of a penetration test: planning, reconnaissance, scanning, exploitation, post-exploitation, reporting.'
+    },
+    'packet_tracer': {
+        'domain': 'Network Security',
+        'objective': '3.3 — Given a scenario, implement secure network architecture concepts',
+        'key_concept': 'Network segmentation controls traffic flow between zones. DMZs are for public-facing services, not internal traffic. VPNs encrypt remote access. Traffic should always flow through security controls.',
+        'exam_tip': 'Understand DMZ architecture, network segmentation, VPN placement and why traffic flows matter for security.'
+    },
+    'brute_force': {
+        'domain': 'Implementation',
+        'objective': '3.2 — Given a scenario, implement cryptographic protocols',
+        'key_concept': 'Password hashing algorithms must be slow and salted. MD5 and SHA-1 are broken for password storage. bcrypt, scrypt and Argon2 are designed specifically for passwords because they are computationally expensive.',
+        'exam_tip': 'Know MD5 and SHA-1 are deprecated. Know bcrypt, scrypt and Argon2 are correct for passwords. Know the difference between hashing, encryption and encoding.'
+    }
+}
+
 def get_random_passwords(hard_mode=False):
     if hard_mode:
         return PASSWORDS_HARD

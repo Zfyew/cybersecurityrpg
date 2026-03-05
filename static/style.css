@@ -396,7 +396,7 @@ select option { background: var(--darker); color: var(--text); }
 .cp-back-btn:hover { border-color: var(--red); color: var(--red); background: transparent; box-shadow: none; }
 
 /* level cards */
-.cp-level-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+.cp-level-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
 
 .cp-level-card {
     border: 1px solid var(--yellow);
