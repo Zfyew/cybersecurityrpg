@@ -29,12 +29,18 @@ async function startGame() {
         return;
     }
 
-    const key = document.getElementById('api-key').value.trim();
-    selectedModel = document.getElementById('model-select').value;
+    const modeAi = document.getElementById('mode-ai').classList.contains('active');
 
-    if (key) {
+    if (modeAi) {
+        const key = document.getElementById('api-key').value.trim();
+        if (!key) {
+            document.getElementById('api-key').focus();
+            document.getElementById('api-key').style.borderBottomColor = '#ff4444';
+            return;
+        }
         apiKey = key;
         aiMode = true;
+        selectedModel = document.getElementById('model-select').value;
     }
 
     const res = await fetch('/api/start', {
@@ -390,4 +396,15 @@ function getRating(score, health) {
     if (total >= 400) return 'A — SENIOR ANALYST';
     if (total >= 300) return 'B — ANALYST';
     return 'C — JUNIOR ANALYST';
+}
+
+function selectMode(mode) {
+    document.getElementById('mode-base').classList.remove('active');
+    document.getElementById('mode-ai').classList.remove('active');
+    document.getElementById(`mode-${mode}`).classList.add('active');
+    document.getElementById('ai-fields').style.display = mode === 'ai' ? 'block' : 'none';
+    if (mode === 'base') {
+        aiMode = false;
+        apiKey = null;
+    }
 }

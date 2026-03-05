@@ -422,3 +422,59 @@ select option {
     background: #0a0a0a;
     color: #666;
 }
+
+.mode-select-row {
+    padding: 16px 24px 20px;
+    border-top: 1px solid #1a1a1a;
+}
+
+.mode-label {
+    font-size: 11px;
+    color: #444;
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+}
+
+.mode-options {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.mode-option {
+    flex: 1;
+    border: 1px solid #333;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mode-option:hover {
+    border-color: #555;
+}
+
+.mode-option.active {
+    border-color: #00ff41;
+    background: rgba(0,255,65,0.05);
+}
+
+.mode-title {
+    font-size: 13px;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+    color: #00ff41;
+}
+
+.mode-option:not(.active) .mode-title {
+    color: #555;
+}
+
+.mode-desc {
+    font-size: 11px;
+    color: #555;
+    line-height: 1.5;
+}
+
+.mode-option.active .mode-desc {
+    color: #888;
+}
