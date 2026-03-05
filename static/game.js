@@ -1111,54 +1111,67 @@ function gameOver(won) {
     }, 200);
 }
 
-// ── matrix background ─────────────────────────────────────────────────────────
+// ── background — slow drifting vertical lines ─────────────────────────────────
 
-(function initMatrix() {
+window.addEventListener('load', function () {
     const canvas = document.getElementById('matrix-bg');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%^&*<>[]{}|/\\';
-    const fontSize = 13;
-    let columns = 0;
+
     let drops = [];
+    let cols = 0;
+    const colWidth = 20;
 
     function resize() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        columns = Math.floor(canvas.width / fontSize);
-        while (drops.length < columns) drops.push(Math.random() * -100);
-        drops.length = columns;
+        cols = Math.floor(canvas.width / colWidth);
+        // fill any new columns, keep existing ones
+        while (drops.length < cols) {
+            drops.push({
+                y: Math.random() * canvas.height,
+                speed: 0.8 + Math.random() * 1.2,
+                opacity: 0.07 + Math.random() * 0.1,
+                length: 40 + Math.floor(Math.random() * 80)
+            });
+        }
+        drops.length = cols;
+    }
+
+    function draw() {
+        // clear with transparent so trails fully fade
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        drops.forEach((drop, i) => {
+            const x = i * colWidth + colWidth / 2;
+
+            // draw a single thin vertical line segment
+            const gradient = ctx.createLinearGradient(x, drop.y - drop.length, x, drop.y);
+            gradient.addColorStop(0, 'rgba(255, 0, 60, 0)');
+            gradient.addColorStop(0.6, `rgba(255, 0, 60, ${drop.opacity})`);
+            gradient.addColorStop(1, 'rgba(255, 0, 60, 0)');
+
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x, drop.y - drop.length);
+            ctx.lineTo(x, drop.y);
+            ctx.stroke();
+
+            // move drop down
+            drop.y += drop.speed;
+
+            // reset to top when it goes off screen
+            if (drop.y - drop.length > canvas.height) {
+                drop.y = -drop.length;
+                drop.speed = 0.2 + Math.random() * 0.4;
+                drop.opacity = 0.03 + Math.random() * 0.06;
+                drop.length = 40 + Math.floor(Math.random() * 80);
+            }
+        });
     }
 
     resize();
     window.addEventListener('resize', resize);
-
-    const colours = ['#f5c518', '#f5c518', '#f5c518', '#00d4ff', '#00d4ff'];
-
-    function draw() {
-        ctx.fillStyle = 'rgba(6, 6, 10, 0.05)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.font = `${fontSize}px "Share Tech Mono", monospace`;
-
-        for (let i = 0; i < drops.length; i++) {
-            const char = chars[Math.floor(Math.random() * chars.length)];
-            const colour = colours[Math.floor(Math.random() * colours.length)];
-            const y = drops[i] * fontSize;
-
-            if (y > 0) {
-                ctx.globalAlpha = 0.7;
-                ctx.fillStyle = '#ffffff';
-                ctx.fillText(char, i * fontSize, y);
-                ctx.globalAlpha = 0.35;
-                ctx.fillStyle = colour;
-                ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * fontSize, y - fontSize);
-            }
-
-            ctx.globalAlpha = 1;
-            if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
-            drops[i] += 0.35;
-        }
-    }
-
-    setInterval(draw, 40);
-})();
+    setInterval(draw, 50);
+});

@@ -1,9 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
 
+html {
+    background: #0a0a0f;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-    --yellow: #f5c518;
+    --red: #f5c518;
     --cyan: #00d4ff;
     --red: #ff003c;
     --dark: #0a0a0f;
@@ -15,11 +19,12 @@
 }
 
 body {
-    background: var(--dark);
+    background: transparent;
     color: var(--text);
     font-family: 'Share Tech Mono', monospace;
     min-height: 100vh;
     overflow-x: hidden;
+    position: relative;
 }
 
 /* scanlines and noise overlay */
@@ -51,8 +56,8 @@ body {
 /* cyberpunk box */
 .cp-box {
     width: 780px;
-    border: 1px solid var(--yellow);
-    box-shadow: 0 0 40px rgba(245,197,24,0.15), inset 0 0 40px rgba(0,0,0,0.5);
+    border: 1px solid var(--red);
+    box-shadow: 0 0 40px rgba(255,0,60,0.15), inset 0 0 40px rgba(0,0,0,0.5);
     background: var(--panel);
     position: relative;
 }
@@ -75,8 +80,8 @@ body {
 }
 
 .cp-header-left { display: flex; align-items: center; gap: 10px; }
-.cp-corner { color: var(--yellow); font-size: 14px; }
-.cp-title { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 3px; color: var(--yellow); }
+.cp-corner { color: var(--red); font-size: 14px; }
+.cp-title { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 3px; color: var(--red); }
 .cp-status { font-size: 11px; color: var(--red); letter-spacing: 2px; }
 
 .blink { animation: blink 1.5s infinite; }
@@ -86,7 +91,7 @@ body {
 
 .cp-ascii {
     font-size: 10px;
-    color: var(--yellow);
+    color: var(--red);
     opacity: 0.6;
     line-height: 1.3;
     margin-bottom: 8px;
@@ -131,7 +136,7 @@ body {
 }
 
 .cp-prompt {
-    color: var(--yellow);
+    color: var(--red);
     font-size: 13px;
     white-space: nowrap;
 }
@@ -145,13 +150,13 @@ input[type="password"] {
     font-size: 13px;
     outline: none;
     flex: 1;
-    caret-color: var(--yellow);
+    caret-color: var(--red);
 }
 
 input::placeholder { color: var(--dim); }
 
 button {
-    background: var(--yellow);
+    background: var(--red);
     border: none;
     color: var(--darker);
     font-family: 'Rajdhani', sans-serif;
@@ -201,7 +206,7 @@ button:hover {
     position: absolute;
     bottom: 0; left: 0;
     width: 0; height: 2px;
-    background: var(--yellow);
+    background: var(--red);
     transition: width 0.2s;
 }
 
@@ -209,11 +214,11 @@ button:hover {
 .cp-mode-card.active::after { width: 100%; }
 
 .cp-mode-card.active {
-    border-color: var(--yellow);
+    border-color: var(--red);
     background: rgba(245,197,24,0.05);
 }
 
-.cp-mode-icon { font-size: 20px; margin-bottom: 8px; color: var(--yellow); }
+.cp-mode-icon { font-size: 20px; margin-bottom: 8px; color: var(--red); }
 .cp-mode-card:not(.active) .cp-mode-icon { color: var(--dim); }
 
 .cp-mode-name {
@@ -221,7 +226,7 @@ button:hover {
     font-weight: 700;
     font-size: 14px;
     letter-spacing: 2px;
-    color: var(--yellow);
+    color: var(--red);
     margin-bottom: 6px;
 }
 
@@ -294,7 +299,7 @@ select option { background: var(--darker); color: var(--text); }
     position: absolute;
     bottom: 0; left: 0;
     width: 100%; height: 1px;
-    background: linear-gradient(90deg, transparent, var(--yellow), transparent);
+    background: linear-gradient(90deg, transparent, var(--red), transparent);
     opacity: 0.3;
 }
 
@@ -315,7 +320,7 @@ select option { background: var(--darker); color: var(--text); }
     color: var(--text);
 }
 
-.cp-hud-value.highlight { color: var(--yellow); }
+.cp-hud-value.highlight { color: var(--red); }
 .cp-hud-value.small { font-size: 12px; color: var(--cyan); }
 
 .cp-health-wrap {
@@ -328,7 +333,7 @@ select option { background: var(--darker); color: var(--text); }
 .cp-health-bar {
     height: 100%;
     width: 100%;
-    background: var(--yellow);
+    background: var(--red);
     transition: width 0.4s, background 0.4s;
     position: relative;
 }
@@ -349,7 +354,7 @@ select option { background: var(--darker); color: var(--text); }
     font-weight: 700;
     font-size: 18px;
     letter-spacing: 5px;
-    color: var(--yellow);
+    color: var(--red);
 }
 
 .cp-hud-subtitle {
@@ -374,7 +379,7 @@ select option { background: var(--darker); color: var(--text); }
     font-weight: 700;
     font-size: 20px;
     letter-spacing: 4px;
-    color: var(--yellow);
+    color: var(--red);
 }
 
 .cp-panel-line {
@@ -399,7 +404,7 @@ select option { background: var(--darker); color: var(--text); }
 .cp-level-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
 
 .cp-level-card {
-    border: 1px solid var(--yellow);
+    border: 1px solid var(--red);
     padding: 20px;
     cursor: pointer;
     transition: all 0.2s;
@@ -413,7 +418,7 @@ select option { background: var(--darker); color: var(--text); }
     position: absolute;
     top: 0; left: 0;
     width: 100%; height: 2px;
-    background: var(--yellow);
+    background: var(--red);
 }
 
 .cp-level-card:hover {
@@ -435,7 +440,7 @@ select option { background: var(--darker); color: var(--text); }
     font-family: 'Rajdhani', sans-serif;
     font-size: 42px;
     font-weight: 700;
-    color: var(--yellow);
+    color: var(--red);
     opacity: 0.2;
     line-height: 1;
     margin-bottom: 10px;
@@ -446,7 +451,7 @@ select option { background: var(--darker); color: var(--text); }
     font-weight: 700;
     font-size: 15px;
     letter-spacing: 2px;
-    color: var(--yellow);
+    color: var(--red);
     margin-bottom: 6px;
 }
 
@@ -455,7 +460,7 @@ select option { background: var(--darker); color: var(--text); }
 
 .cp-level-status {
     font-size: 11px;
-    color: var(--yellow);
+    color: var(--red);
     letter-spacing: 2px;
 }
 
@@ -486,7 +491,7 @@ select option { background: var(--darker); color: var(--text); }
 
 .cp-cert-bar {
     height: 100%;
-    background: linear-gradient(90deg, var(--cyan), var(--yellow));
+    background: linear-gradient(90deg, var(--cyan), var(--red));
     transition: width 0.8s;
 }
 
@@ -523,8 +528,8 @@ select option { background: var(--darker); color: var(--text); }
 }
 
 .cp-password-btn:hover {
-    border-color: var(--yellow);
-    color: var(--yellow);
+    border-color: var(--red);
+    color: var(--red);
     background: rgba(245,197,24,0.05);
     box-shadow: 0 0 10px rgba(245,197,24,0.1);
 }
@@ -579,7 +584,7 @@ select option { background: var(--darker); color: var(--text); }
 }
 
 .cp-log-entry:hover { border-left-color: var(--cyan); background: rgba(0,212,255,0.03); }
-.cp-log-entry.selected { border-left-color: var(--yellow); background: rgba(245,197,24,0.05); color: var(--yellow); }
+.cp-log-entry.selected { border-left-color: var(--red); background: rgba(245,197,24,0.05); color: var(--red); }
 
 /* hint */
 .cp-hint-btn {
@@ -668,7 +673,7 @@ select option { background: var(--darker); color: var(--text); }
 }
 
 .cp-domain-value { font-size: 12px; color: #d0d0e8; line-height: 1.6; }
-.cp-domain-value.highlight { color: var(--yellow); }
+.cp-domain-value.highlight { color: var(--red); }
 
 /* mode indicator */
 .cp-mode-indicator {
@@ -694,12 +699,12 @@ select option { background: var(--darker); color: var(--text); }
 .cp-confirm-btn {
     margin-top: 16px;
     background: transparent;
-    border: 1px solid var(--yellow);
-    color: var(--yellow);
+    border: 1px solid var(--red);
+    color: var(--red);
     clip-path: none;
 }
 
-.cp-confirm-btn:hover { background: var(--yellow); color: var(--darker); }
+.cp-confirm-btn:hover { background: var(--red); color: var(--darker); }
 
 /* transitions */
 .cp-panel {
@@ -747,7 +752,7 @@ select option { background: var(--darker); color: var(--text); }
     top: 0; left: 0;
     height: 2px;
     width: 0%;
-    background: linear-gradient(90deg, var(--yellow), var(--cyan));
+    background: linear-gradient(90deg, var(--red), var(--cyan));
     z-index: 10000;
     transition: width 0.4s ease;
 }
@@ -826,7 +831,7 @@ select option { background: var(--darker); color: var(--text); }
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: var(--yellow);
+    background: var(--red);
     opacity: 0;
     pointer-events: none;
     z-index: 9997;
@@ -1069,3 +1074,49 @@ select option { background: var(--darker); color: var(--text); }
 .cp-panel {
     padding-bottom: 60px;
 }
+
+/* ── background ──────────────────────────────────────────────────────────── */
+
+#matrix-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+    display: block;
+}
+
+body {
+    position: relative;
+}
+
+.screen {
+    position: relative;
+    z-index: 2;
+}
+
+#game-screen {
+    position: relative;
+    z-index: 2;
+}
+
+#scanlines {
+    z-index: 10;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+}
+
+#noise {
+    z-index: 9;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+}
+
+.cp-loading-bar { z-index: 10000; }
+.cp-screen-flash { z-index: 9997; }
